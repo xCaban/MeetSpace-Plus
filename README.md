@@ -2,6 +2,10 @@
 
 MeetSpace Plus to aplikacja webowa do zarządzania rezerwacjami sal konferencyjnych. System umożliwia łatwe przeglądanie dostępnych sal, sprawdzanie ich dostępności w czasie rzeczywistym oraz zarządzanie rezerwacjami.
 
+# Link do Figmy
+
+https://www.figma.com/design/ZPdmxz8s3gRMkpoc7RWCNs/MeetSpace-Plus?node-id=0-1&t=OQOvo4Q2AAuZTMX5-1
+
 ## Funkcjonalności
 
 ### Dla użytkowników
