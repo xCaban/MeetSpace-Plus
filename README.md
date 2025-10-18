@@ -27,21 +27,7 @@ MeetSpace Plus to aplikacja webowa do zarządzania rezerwacjami sal konferencyjn
 - PostgreSQL
 - Docker
 
-## Instalacja
-
-1. Sklonuj repozytorium:
 ```bash
 git clone https://github.com/xCaban/MeetSpace-Plus.git
 cd MeetSpace-Plus
 ```
-
-### Instalacja z użyciem Dockera
-
-1. Zbuduj i uruchom kontenery:
-```bash
-docker-compose up -d
-```
-
-2. W folderze config, w pliku database.example.php znajduje się login i hasło do bazy. Zmień je na bezpieczne i zmień nazwe pliku na database.php
-
-3. Aplikacja będzie dostępna pod adresem `http://localhost:8081`
