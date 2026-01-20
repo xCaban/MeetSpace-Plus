@@ -12,68 +12,68 @@ erDiagram
     equipment ||--o{ room_equipment : "w"
 
     users {
-        bigint id PK
-        varchar username
-        varchar email
-        varchar first_name
-        varchar last_name
-        bool is_staff
-        bool is_active
-        datetime date_joined
-        datetime created_at
-        datetime updated_at
+        int id
+        string username
+        string email
+        string first_name
+        string last_name
+        int is_staff
+        int is_active
+        string date_joined
+        string created_at
+        string updated_at
     }
 
     roles {
-        bigint id PK
-        varchar name UK
-        datetime created_at
-        datetime updated_at
+        int id
+        string name
+        string created_at
+        string updated_at
     }
 
     user_roles {
-        bigint id PK
-        bigint user_id FK
-        bigint role_id FK
-        datetime created_at
-        datetime updated_at
+        int id
+        int user_id
+        int role_id
+        string created_at
+        string updated_at
     }
 
     rooms {
-        bigint id PK
-        varchar name
+        int id
+        string name
         int capacity
-        varchar location
-        datetime created_at
-        datetime updated_at
+        string location
+        string created_at
+        string updated_at
     }
 
     equipment {
-        bigint id PK
-        varchar name
-        datetime created_at
-        datetime updated_at
+        int id
+        string name
+        string created_at
+        string updated_at
     }
 
     room_equipment {
-        bigint id PK
-        bigint room_id FK
-        bigint equipment_id FK
+        int id
+        int room_id
+        int equipment_id
         int qty
-        datetime created_at
-        datetime updated_at
+        string created_at
+        string updated_at
     }
 
     reservations {
-        bigint id PK
-        bigint user_id FK
-        bigint room_id FK
-        varchar status "pending|confirmed|canceled"
-        datetime start_at
-        datetime end_at
-        datetime hold_expires_at
-        datetime created_at
-        datetime updated_at
+        int id
+        int user_id
+        int room_id
+        string status
+        string start_at
+        string end_at
+        string hold_expires_at
+        string created_at
+        string updated_at
     }
 ```
 

@@ -103,13 +103,59 @@ erDiagram
     rooms ||--o{ room_equipment : "ma"
     equipment ||--o{ room_equipment : "w"
 
-    users { bigint id PK, varchar username, varchar email, bool is_staff, bool is_active, datetime date_joined, created_at, updated_at }
-    roles { bigint id PK, varchar name UK, created_at, updated_at }
-    user_roles { bigint id PK, bigint user_id FK, bigint role_id FK, created_at, updated_at }
-    rooms { bigint id PK, varchar name, int capacity, varchar location, created_at, updated_at }
-    equipment { bigint id PK, varchar name, created_at, updated_at }
-    room_equipment { bigint id PK, bigint room_id FK, bigint equipment_id FK, int qty, created_at, updated_at }
-    reservations { bigint id PK, bigint user_id FK, bigint room_id FK, varchar status "pending|confirmed|canceled", datetime start_at, end_at, hold_expires_at, created_at, updated_at }
+    users {
+        int id
+        string username
+        string email
+        string created_at
+        string updated_at
+    }
+    roles {
+        int id
+        string name
+        string created_at
+        string updated_at
+    }
+    user_roles {
+        int id
+        int user_id
+        int role_id
+        string created_at
+        string updated_at
+    }
+    rooms {
+        int id
+        string name
+        int capacity
+        string location
+        string created_at
+        string updated_at
+    }
+    equipment {
+        int id
+        string name
+        string created_at
+        string updated_at
+    }
+    room_equipment {
+        int id
+        int room_id
+        int equipment_id
+        int qty
+        string created_at
+        string updated_at
+    }
+    reservations {
+        int id
+        int user_id
+        int room_id
+        string status
+        string start_at
+        string end_at
+        string hold_expires_at
+        string created_at
+        string updated_at
+    }
 ```
 
 Braku nakładania slotów `(room_id, [start_at, end_at])` nie da się w pełni wymusić na samym SQLite; w projekcie jest on egzekwowany w **serwisie** `booking.create_reservation` (409 przy kolizji). W PostgreSQL możliwy jest `ExclusionConstraint`.
