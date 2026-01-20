@@ -42,6 +42,8 @@ erDiagram
     rooms {
         bigint id PK
         varchar name
+        int capacity
+        varchar location
         datetime created_at
         datetime updated_at
     }
