@@ -1,0 +1,19 @@
+"""Agregacja ścieżek API: auth, me, rooms, reservations."""
+
+from django.urls import include, path
+from rest_framework.routers import DefaultRouter
+
+from accounts import urls as accounts_urls
+from accounts.views import MeView
+from reservations.views import ReservationViewSet
+from rooms.views import RoomViewSet
+
+router = DefaultRouter()
+router.register(r"rooms", RoomViewSet, basename="room")
+router.register(r"reservations", ReservationViewSet, basename="reservation")
+
+urlpatterns = [
+    path("auth/", include(accounts_urls)),
+    path("me", MeView.as_view(), name="me"),
+    path("", include(router.urls)),
+]

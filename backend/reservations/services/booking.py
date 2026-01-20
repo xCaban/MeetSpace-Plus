@@ -8,7 +8,7 @@ from django.utils import timezone
 from reservations.exceptions import ReservationCollisionError, ReservationValidationError
 from reservations.models import Reservation
 from reservations.services.availability import intervals_overlap
-from reservations.tasks import expire_hold
+from reservations.tasks import expire_hold, send_notifications
 
 
 def create_reservation(
@@ -76,4 +76,39 @@ def create_reservation(
         hold_expires_at=hold_expires_at,
     )
     expire_hold.apply_async(args=[reservation.id], eta=hold_expires_at)
+    return reservation
+
+
+def confirm_reservation(reservation):
+    """Potwierdza rezerwację (pending → confirmed). Kolejkuje send_notifications.
+
+    Uprawnienia (owner lub admin) weryfikuje warstwa widoków.
+    """
+    if reservation.status != Reservation.Status.PENDING:
+        raise ReservationValidationError(
+            "Tylko rezerwacje w statusie pending można potwierdzić"
+        )
+    reservation.status = Reservation.Status.CONFIRMED
+    reservation.save(update_fields=["status", "updated_at"])
+    send_notifications.delay(reservation.id, "confirmed")
+    return reservation
+
+
+def cancel_reservation(reservation):
+    """Anuluje rezerwację (pending/confirmed → canceled). Kolejkuje send_notifications.
+
+    Idempotentne przy już anulowanej. Uprawnienia (owner lub admin) weryfikuje warstwa widoków.
+    """
+    if reservation.status == Reservation.Status.CANCELED:
+        return reservation
+    if reservation.status not in (
+        Reservation.Status.PENDING,
+        Reservation.Status.CONFIRMED,
+    ):
+        raise ReservationValidationError(
+            f"Nie można anulować rezerwacji w statusie {reservation.status}"
+        )
+    reservation.status = Reservation.Status.CANCELED
+    reservation.save(update_fields=["status", "updated_at"])
+    send_notifications.delay(reservation.id, "canceled")
     return reservation
