@@ -11,11 +11,34 @@ const auth = useAuthStore()
 
 const loading = ref(false)
 const error = ref<string | null>(null)
+const emailError = ref<string | null>(null)
+const passwordError = ref<string | null>(null)
 const form = reactive({ email: "", password: "" })
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+function validate(): boolean {
+  emailError.value = null
+  passwordError.value = null
+  let ok = true
+  if (!form.email.trim()) {
+    emailError.value = "E-mail jest wymagany"
+    ok = false
+  } else if (!EMAIL_RE.test(form.email)) {
+    emailError.value = "Nieprawidłowy format e-mail"
+    ok = false
+  }
+  if (!form.password) {
+    passwordError.value = "Hasło jest wymagane"
+    ok = false
+  }
+  return ok
+}
+
 async function onSubmit() {
-  loading.value = true
   error.value = null
+  if (!validate()) return
+  loading.value = true
   try {
     await auth.login(form)
     const redirect = (route.query.redirect as string) || "/rooms"
@@ -42,7 +65,7 @@ async function onSubmit() {
           label="E-mail"
           name="email"
           placeholder="user@example.com"
-          :error="error ?? undefined"
+          :error="emailError ?? undefined"
         />
         <BaseInput
           v-model="form.password"
@@ -50,7 +73,9 @@ async function onSubmit() {
           label="Hasło"
           name="password"
           placeholder="••••••••"
+          :error="passwordError ?? undefined"
         />
+        <p v-if="error" class="login-form-error">{{ error }}</p>
         <BaseButton type="submit" :disabled="loading" block>
           {{ loading ? "Logowanie…" : "Zaloguj" }}
         </BaseButton>
@@ -97,5 +122,11 @@ async function onSubmit() {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
+}
+
+.login-form-error {
+  font-size: var(--text-sm);
+  color: var(--color-danger);
+  margin: 0;
 }
 </style>

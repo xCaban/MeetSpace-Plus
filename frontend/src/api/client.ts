@@ -11,16 +11,17 @@ export const api = axios.create({
   },
 })
 
-/** Interceptor request: dołącza JWT z localStorage. */
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("access")
+/** Interceptor request: dołącza Bearer access token ze store (pamięć). */
+api.interceptors.request.use(async (config) => {
+  const { useAuthStore } = await import("@/stores/auth")
+  const token = useAuthStore().getAccessToken()
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
   return config
 })
 
-/** Interceptor response: 401 → próba refresh, błędy → ujednolicony format. */
+/** Interceptor response: 401 → jedna próba refresh, potem logout. */
 api.interceptors.response.use(
   (res) => res,
   async (err: AxiosError<ApiError>) => {
@@ -28,24 +29,25 @@ api.interceptors.response.use(
     if (!orig || orig._retry) {
       return Promise.reject(normalizeError(err))
     }
+    const url = orig.url ?? ""
 
     if (err.response?.status === 401) {
+      if (url.includes("/auth/login") || url.includes("/auth/refresh")) {
+        return Promise.reject(normalizeError(err))
+      }
       orig._retry = true
-      const refresh = localStorage.getItem("refresh")
-      if (refresh) {
-        try {
-          const { data } = await axios.post<{ access: string }>(
-            `${api.defaults.baseURL}/auth/refresh`,
-            { refresh }
-          )
-          localStorage.setItem("access", data.access)
-          if (orig.headers) orig.headers.Authorization = `Bearer ${data.access}`
-          return api(orig)
-        } catch {
-          localStorage.removeItem("access")
-          localStorage.removeItem("refresh")
-          window.dispatchEvent(new Event("auth:logout"))
+      const { useAuthStore } = await import("@/stores/auth")
+      const auth = useAuthStore()
+      try {
+        await auth.refreshToken()
+        const token = auth.getAccessToken()
+        if (orig.headers && token) {
+          orig.headers.Authorization = `Bearer ${token}`
         }
+        return api(orig)
+      } catch {
+        await auth.logout()
+        return Promise.reject(normalizeError(err))
       }
     }
 
@@ -59,14 +61,16 @@ declare module "axios" {
   }
 }
 
-function normalizeError(err: AxiosError<ApiError>): { message: string; status?: number; data?: ApiError } {
+function normalizeError(
+  err: AxiosError<ApiError>
+): { message: string; status?: number; data?: ApiError } {
   const status = err.response?.status
   const data = err.response?.data
   let message = err.message
   if (data?.detail && typeof data.detail === "string") message = data.detail
   else if (data && typeof data === "object") {
     const first = Object.values(data).flat().find((v) => typeof v === "string")
-    if (first) message = first
+    if (first) message = first as string
   }
   return { message, status, data }
 }

@@ -3,7 +3,6 @@ import { createPinia } from "pinia"
 
 import App from "./App.vue"
 import router from "./router"
-import { useAuthStore } from "./stores/auth"
 
 import "./styles/tokens.css"
 import "./styles/base.css"
@@ -14,7 +13,6 @@ app.use(router)
 
 if (typeof window !== "undefined") {
   window.addEventListener("auth:logout", () => {
-    useAuthStore().clearUser()
     router.push("/login")
   })
 }

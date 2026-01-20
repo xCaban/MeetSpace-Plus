@@ -28,8 +28,8 @@ const router = createRouter({
           component: () => import("@/views/CalendarView.vue"),
         },
         {
-          path: "my-reservations",
-          name: "my-reservations",
+          path: "my",
+          name: "my",
           component: () => import("@/views/MyReservationsView.vue"),
         },
         {
@@ -54,6 +54,10 @@ router.beforeEach(async (to) => {
   }
 
   if (to.meta.requiresAuth && !auth.isAuthenticated) {
+    return { name: "login", query: { redirect: to.fullPath } }
+  }
+
+  if (to.path.startsWith("/admin") && !auth.isAdmin) {
     return { name: "login", query: { redirect: to.fullPath } }
   }
 

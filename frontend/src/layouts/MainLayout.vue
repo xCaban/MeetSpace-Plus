@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue"
-import { RouterLink, useRouter, useRoute } from "vue-router"
+import { RouterLink, useRoute } from "vue-router"
 import { useAuthStore } from "@/stores/auth"
 import BaseButton from "@/components/base/BaseButton.vue"
 
-const router = useRouter()
 const route = useRoute()
 const auth = useAuthStore()
 
@@ -16,14 +15,13 @@ onMounted(() => {
 
 function onLogout() {
   auth.logout()
-  router.push({ name: "login" })
 }
 
 const nav = computed(() => {
   const items = [
     { name: "Sale", to: { name: "rooms" } },
     { name: "Kalendarz", to: { name: "calendar" } },
-    { name: "Moje rezerwacje", to: { name: "my-reservations" } },
+    { name: "Moje rezerwacje", to: { name: "my" } },
   ]
   if (auth.isAdmin) {
     items.push({ name: "Panel admina", to: { name: "admin-rooms" } })
