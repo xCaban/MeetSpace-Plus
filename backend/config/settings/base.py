@@ -137,3 +137,28 @@ CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
+CELERY_TASK_ALWAYS_EAGER = os.environ.get("CELERY_TASK_ALWAYS_EAGER", "0").lower() in (
+    "1",
+    "true",
+    "yes",
+)
+
+# Celery Beat: reconcile_pending co 5 min (sprzątanie starych pending)
+CELERY_BEAT_SCHEDULE = {
+    "reconcile-pending": {
+        "task": "reservations.tasks.reconcile_pending",
+        "schedule": 300.0,  # sekundy
+    },
+}
+
+# Retry: per-task (bind=True, max_retries, default_retry_delay) w tasks.
+#
+# Dead-Letter (DLX) w RabbitMQ – jak skonfigurować (bez nadmiarowej konfiguracji):
+# 1) Utwórz exchange DLX: rabbitmqadmin declare exchange name=dlx type=direct
+# 2) Kolejkę DLQ z argumentami: x-dead-letter-exchange=dlx, x-message-ttl=86400000
+#    (opcjonalnie x-dead-letter-routing-key=celery dla przekierowania)
+# 3) W RabbitMQ: Policies lub przy deklaracji kolejki Celery ustaw dead_letter_exchange.
+#    Dla Celery: task_queues w settings / CELERY_TASK_QUEUES z arguments
+#    {"x-dead-letter-exchange": "dlx"} – w zależności od wersji.
+# 4) Zbinduj DLQ do exchange dlx (routing key = nazwa kolejki źródłowej lub ogólna).
+# Niezrealizowane wiadomości (reject, TTL, max-length) trafią do DLQ.
