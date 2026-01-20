@@ -9,7 +9,7 @@ from rooms.models import Room
 class RoomListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Room
-        fields = ("id", "name", "created_at", "updated_at")
+        fields = ("id", "name", "capacity", "location", "created_at", "updated_at")
 
 
 class RoomDetailSerializer(serializers.ModelSerializer):
@@ -17,7 +17,7 @@ class RoomDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Room
-        fields = ("id", "name", "equipment", "created_at", "updated_at")
+        fields = ("id", "name", "capacity", "location", "equipment", "created_at", "updated_at")
 
     @extend_schema_field(
         {
@@ -40,4 +40,4 @@ class RoomCreateUpdateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Room
-        fields = ("name",)
+        fields = ("name", "capacity", "location")

@@ -25,7 +25,7 @@ from rooms.serializers import (
             OpenApiExample(
                 "Response",
                 value=[
-                    {"id": 1, "name": "Sala A", "created_at": "2025-01-01T00:00:00Z", "updated_at": "2025-01-01T00:00:00Z"},
+                    {"id": 1, "name": "Sala A", "capacity": 6, "location": "Budynek A, parter", "created_at": "2025-01-01T00:00:00Z", "updated_at": "2025-01-01T00:00:00Z"},
                 ],
                 response_only=True,
             ),
@@ -42,6 +42,8 @@ from rooms.serializers import (
                 value={
                     "id": 1,
                     "name": "Sala A",
+                    "capacity": 6,
+                    "location": "Budynek A, parter",
                     "equipment": [{"name": "Projektor", "qty": 1}, {"name": "Tablica", "qty": 1}],
                     "created_at": "2025-01-01T00:00:00Z",
                     "updated_at": "2025-01-01T00:00:00Z",
