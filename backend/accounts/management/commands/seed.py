@@ -36,7 +36,13 @@ ROOMS = [
 ]
 
 # 5 equipment
-EQUIPMENT_NAMES = ["Projektor", "Tablica suchościeralna", "Telekonferencja", "Klimatyzacja", "Whiteboard"]
+EQUIPMENT_NAMES = [
+    "Projektor",
+    "Tablica suchościeralna",
+    "Telekonferencja",
+    "Klimatyzacja",
+    "Whiteboard",
+]
 
 # 10 użytkowników (pierwszych 2 = admin)
 USER_EMAILS = [
@@ -54,8 +60,26 @@ USER_EMAILS = [
 
 # 20 par (room_index 0..9, equipment_index 0..4) – room_equipment
 ROOM_EQUIPMENT_PAIRS = [
-    (0, 0), (0, 1), (0, 2), (1, 0), (1, 1), (1, 3), (2, 0), (2, 1), (3, 0), (3, 1),
-    (3, 2), (3, 3), (4, 0), (4, 2), (4, 3), (5, 0), (5, 4), (6, 0), (6, 4), (7, 0),
+    (0, 0),
+    (0, 1),
+    (0, 2),
+    (1, 0),
+    (1, 1),
+    (1, 3),
+    (2, 0),
+    (2, 1),
+    (3, 0),
+    (3, 1),
+    (3, 2),
+    (3, 3),
+    (4, 0),
+    (4, 2),
+    (4, 3),
+    (5, 0),
+    (5, 4),
+    (6, 0),
+    (6, 4),
+    (7, 0),
 ]
 
 
@@ -95,7 +119,9 @@ class Command(BaseCommand):
                 u.save(update_fields=["password"])
             users.append(u)
             UserRole.objects.get_or_create(user=u, role=role_admin if i < 2 else role_user)
-        self.stdout.write(self.style.SUCCESS(f"Userzy: {len(users)} (2 admin), hasło: {SEED_PASSWORD}"))
+        self.stdout.write(
+            self.style.SUCCESS(f"Userzy: {len(users)} (2 admin), hasło: {SEED_PASSWORD}")
+        )
 
         # 10 sal
         rooms = []
@@ -158,7 +184,11 @@ class Command(BaseCommand):
                     hold_expires_at=hold,
                 )
                 created += 1
-            self.stdout.write(self.style.SUCCESS(f"Rezerwacje: {created} (kilka pending z hold_expires_at w przyszłości)"))
+            self.stdout.write(
+                self.style.SUCCESS(
+                    f"Rezerwacje: {created} (kilka pending z hold_expires_at w przyszłości)"
+                )
+            )
         else:
             self.stdout.write("Rezerwacje: pominięto (istnieją; użyj --reset aby odtworzyć).")
 

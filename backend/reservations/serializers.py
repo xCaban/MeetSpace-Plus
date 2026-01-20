@@ -55,11 +55,7 @@ class ReservationCreateSerializer(serializers.Serializer):
 
     def validate(self, data):
         if data["start_at"] >= data["end_at"]:
-            raise serializers.ValidationError(
-                {"end_at": "end_at musi być później niż start_at"}
-            )
+            raise serializers.ValidationError({"end_at": "end_at musi być później niż start_at"})
         if not Room.objects.filter(pk=data["room_id"]).exists():
-            raise serializers.ValidationError(
-                {"room_id": "Sala o podanym id nie istnieje"}
-            )
+            raise serializers.ValidationError({"room_id": "Sala o podanym id nie istnieje"})
         return data

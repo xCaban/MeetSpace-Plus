@@ -1,4 +1,9 @@
-from drf_spectacular.utils import OpenApiExample, extend_schema, extend_schema_view, inline_serializer
+from drf_spectacular.utils import (
+    OpenApiExample,
+    extend_schema,
+    extend_schema_view,
+    inline_serializer,
+)
 from rest_framework import serializers, status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -26,8 +31,12 @@ from accounts.serializers import LoginSerializer, UserProfileSerializer
             401: {"description": "Nieprawidłowy lub wygasły refresh token"},
         },
         examples=[
-            OpenApiExample("Request", value={"refresh": "eyJ0eXAiOiJKV1QiLCJhbGc..."}, request_only=True),
-            OpenApiExample("Response", value={"access": "eyJ0eXAiOiJKV1QiLCJhbGc..."}, response_only=True),
+            OpenApiExample(
+                "Request", value={"refresh": "eyJ0eXAiOiJKV1QiLCJhbGc..."}, request_only=True
+            ),
+            OpenApiExample(
+                "Response", value={"access": "eyJ0eXAiOiJKV1QiLCJhbGc..."}, response_only=True
+            ),
         ],
     ),
 )
@@ -49,7 +58,9 @@ class TokenRefreshDocumentedView(TokenRefreshView):
             400: {"description": "Błąd (np. brak refresh w body)"},
         },
         examples=[
-            OpenApiExample("Request", value={"refresh": "eyJ0eXAiOiJKV1QiLCJhbGc..."}, request_only=True),
+            OpenApiExample(
+                "Request", value={"refresh": "eyJ0eXAiOiJKV1QiLCJhbGc..."}, request_only=True
+            ),
         ],
     ),
 )

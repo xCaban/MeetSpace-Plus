@@ -4,7 +4,9 @@ from django.db import models
 class Room(models.Model):
     name = models.CharField(max_length=255)
     capacity = models.PositiveIntegerField(default=10, help_text="Pojemność (liczba osób)")
-    location = models.CharField(max_length=255, blank=True, default="", help_text="Lokalizacja, np. piętro, budynek")
+    location = models.CharField(
+        max_length=255, blank=True, default="", help_text="Lokalizacja, np. piętro, budynek"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

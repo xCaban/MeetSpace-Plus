@@ -1,6 +1,7 @@
 """Agregacja ścieżek API: auth, me, rooms, reservations."""
 
 from django.urls import include, path
+
 from rest_framework.routers import DefaultRouter
 
 from accounts import urls as accounts_urls

@@ -3,16 +3,20 @@
 from datetime import datetime
 from unittest.mock import patch
 
-import pytest
 from django.utils import timezone
+
+import pytest
 
 from accounts.models import User
 from reservations.exceptions import ReservationCollisionError, ReservationValidationError
 from reservations.models import Reservation
 from reservations.services.availability import intervals_overlap
-from reservations.services.booking import create_reservation
+from reservations.services.booking import (
+    cancel_reservation,
+    confirm_reservation,
+    create_reservation,
+)
 from rooms.models import Room
-
 
 # --- intervals_overlap: przypadki brzegowe ---
 
@@ -22,21 +26,27 @@ class TestIntervalsOverlap:
 
     def test_styczność_brak_kolizji(self):
         """[9,10) i [10,11) – stykające się; brak nakładania."""
-        assert intervals_overlap(
-            datetime(2025, 1, 15, 9, 0),
-            datetime(2025, 1, 15, 10, 0),
-            datetime(2025, 1, 15, 10, 0),
-            datetime(2025, 1, 15, 11, 0),
-        ) is False
+        assert (
+            intervals_overlap(
+                datetime(2025, 1, 15, 9, 0),
+                datetime(2025, 1, 15, 10, 0),
+                datetime(2025, 1, 15, 10, 0),
+                datetime(2025, 1, 15, 11, 0),
+            )
+            is False
+        )
 
     def test_pełne_zawarcie_kolizja(self):
         """[9,12) zawiera [10,11) – kolizja."""
-        assert intervals_overlap(
-            datetime(2025, 1, 15, 9, 0),
-            datetime(2025, 1, 15, 12, 0),
-            datetime(2025, 1, 15, 10, 0),
-            datetime(2025, 1, 15, 11, 0),
-        ) is True
+        assert (
+            intervals_overlap(
+                datetime(2025, 1, 15, 9, 0),
+                datetime(2025, 1, 15, 12, 0),
+                datetime(2025, 1, 15, 10, 0),
+                datetime(2025, 1, 15, 11, 0),
+            )
+            is True
+        )
 
     def test_identyczne_okna_kolizja(self):
         """[9,10) i [9,10) – identyczne; kolizja."""
@@ -45,21 +55,27 @@ class TestIntervalsOverlap:
 
     def test_rozłączne_brak_kolizji(self):
         """[9,10) i [11,12) – rozłączne."""
-        assert intervals_overlap(
-            datetime(2025, 1, 15, 9, 0),
-            datetime(2025, 1, 15, 10, 0),
-            datetime(2025, 1, 15, 11, 0),
-            datetime(2025, 1, 15, 12, 0),
-        ) is False
+        assert (
+            intervals_overlap(
+                datetime(2025, 1, 15, 9, 0),
+                datetime(2025, 1, 15, 10, 0),
+                datetime(2025, 1, 15, 11, 0),
+                datetime(2025, 1, 15, 12, 0),
+            )
+            is False
+        )
 
     def test_częściowe_nakładanie_kolizja(self):
         """[9,11) i [10,12) – częściowe; kolizja."""
-        assert intervals_overlap(
-            datetime(2025, 1, 15, 9, 0),
-            datetime(2025, 1, 15, 11, 0),
-            datetime(2025, 1, 15, 10, 0),
-            datetime(2025, 1, 15, 12, 0),
-        ) is True
+        assert (
+            intervals_overlap(
+                datetime(2025, 1, 15, 9, 0),
+                datetime(2025, 1, 15, 11, 0),
+                datetime(2025, 1, 15, 10, 0),
+                datetime(2025, 1, 15, 12, 0),
+            )
+            is True
+        )
 
 
 # --- create_reservation ---
@@ -95,9 +111,7 @@ class TestCreateReservation:
         start = _dt(2025, 2, 1, 10, 0)
         end = _dt(2025, 2, 1, 9, 0)
         with pytest.raises(ReservationValidationError, match="start_at"):
-            create_reservation(
-                user, room.id, start, end, work_start=work_start, work_end=work_end
-            )
+            create_reservation(user, room.id, start, end, work_start=work_start, work_end=work_end)
         mock_expire.apply_async.assert_not_called()
 
     def test_poza_godzinami_roboczymi(self, mock_expire, user, room, work_hours):
@@ -105,9 +119,7 @@ class TestCreateReservation:
         start = _dt(2025, 2, 1, 7, 0)
         end = _dt(2025, 2, 1, 8, 0)
         with pytest.raises(ReservationValidationError, match="godzinami roboczymi"):
-            create_reservation(
-                user, room.id, start, end, work_start=work_start, work_end=work_end
-            )
+            create_reservation(user, room.id, start, end, work_start=work_start, work_end=work_end)
         mock_expire.apply_async.assert_not_called()
 
     def test_na_dwa_dni_validation_error(self, mock_expire, user, room, work_hours):
@@ -115,9 +127,7 @@ class TestCreateReservation:
         start = _dt(2025, 2, 1, 17, 0)
         end = _dt(2025, 2, 2, 9, 0)
         with pytest.raises(ReservationValidationError, match="jednym dniu"):
-            create_reservation(
-                user, room.id, start, end, work_start=work_start, work_end=work_end
-            )
+            create_reservation(user, room.id, start, end, work_start=work_start, work_end=work_end)
         mock_expire.apply_async.assert_not_called()
 
     def test_naive_datetime_validation_error(self, mock_expire, user, room, work_hours):
@@ -125,9 +135,7 @@ class TestCreateReservation:
         start = datetime(2025, 2, 1, 10, 0)  # naive
         end = datetime(2025, 2, 1, 11, 0)
         with pytest.raises(ReservationValidationError, match="timezone-aware"):
-            create_reservation(
-                user, room.id, start, end, work_start=work_start, work_end=work_end
-            )
+            create_reservation(user, room.id, start, end, work_start=work_start, work_end=work_end)
         mock_expire.apply_async.assert_not_called()
 
     def test_kolizja_collision_error(self, mock_expire, user, room, work_hours):
@@ -135,24 +143,18 @@ class TestCreateReservation:
         start = _dt(2025, 2, 1, 10, 0)
         end = _dt(2025, 2, 1, 11, 0)
         Reservation.objects.create(
-            user=user, room=room, status=Reservation.Status.CONFIRMED,
-            start_at=start, end_at=end
+            user=user, room=room, status=Reservation.Status.CONFIRMED, start_at=start, end_at=end
         )
         with pytest.raises(ReservationCollisionError, match="kolizja"):
-            create_reservation(
-                user, room.id, start, end, work_start=work_start, work_end=work_end
-            )
+            create_reservation(user, room.id, start, end, work_start=work_start, work_end=work_end)
         mock_expire.apply_async.assert_not_called()
 
-    def test_ok_tworzy_pending_i_kolejkuje_expire_hold(
-        self, mock_expire, user, room, work_hours
-    ):
+    def test_ok_tworzy_pending_i_kolejkuje_expire_hold(self, mock_expire, user, room, work_hours):
         work_start, work_end = work_hours
         start = _dt(2025, 2, 1, 10, 0)
         end = _dt(2025, 2, 1, 11, 0)
         r = create_reservation(
-            user, room.id, start, end,
-            work_start=work_start, work_end=work_end, hold_minutes=15
+            user, room.id, start, end, work_start=work_start, work_end=work_end, hold_minutes=15
         )
         assert r.status == Reservation.Status.PENDING
         assert r.room_id == room.id
@@ -167,13 +169,105 @@ class TestCreateReservation:
         """Istniejąca [10,11); nowa [11,12) – styczność: brak kolizji."""
         work_start, work_end = work_hours
         Reservation.objects.create(
-            user=user, room=room, status=Reservation.Status.CONFIRMED,
-            start_at=_dt(2025, 2, 1, 10, 0), end_at=_dt(2025, 2, 1, 11, 0)
+            user=user,
+            room=room,
+            status=Reservation.Status.CONFIRMED,
+            start_at=_dt(2025, 2, 1, 10, 0),
+            end_at=_dt(2025, 2, 1, 11, 0),
         )
         r = create_reservation(
-            user, room.id,
-            _dt(2025, 2, 1, 11, 0), _dt(2025, 2, 1, 12, 0),
-            work_start=work_start, work_end=work_end, hold_minutes=15
+            user,
+            room.id,
+            _dt(2025, 2, 1, 11, 0),
+            _dt(2025, 2, 1, 12, 0),
+            work_start=work_start,
+            work_end=work_end,
+            hold_minutes=15,
         )
         assert r.status == Reservation.Status.PENDING
         mock_expire.apply_async.assert_called_once()
+
+
+# --- confirm_reservation, cancel_reservation ---
+
+
+@patch("reservations.services.booking.send_notifications")
+class TestConfirmReservation:
+    def test_ok_pending_to_confirmed(self, mock_send, user, room):
+        r = Reservation.objects.create(
+            user=user,
+            room=room,
+            status=Reservation.Status.PENDING,
+            start_at=_dt(2025, 2, 1, 10, 0),
+            end_at=_dt(2025, 2, 1, 11, 0),
+        )
+        out = confirm_reservation(r)
+        assert out.status == Reservation.Status.CONFIRMED
+        r.refresh_from_db()
+        assert r.status == Reservation.Status.CONFIRMED
+        mock_send.delay.assert_called_once_with(r.id, "confirmed")
+
+    def test_not_pending_raises(self, mock_send, user, room):
+        r = Reservation.objects.create(
+            user=user,
+            room=room,
+            status=Reservation.Status.CONFIRMED,
+            start_at=_dt(2025, 2, 1, 10, 0),
+            end_at=_dt(2025, 2, 1, 11, 0),
+        )
+        with pytest.raises(ReservationValidationError, match="pending"):
+            confirm_reservation(r)
+        mock_send.delay.assert_not_called()
+
+
+@patch("reservations.services.booking.send_notifications")
+class TestCancelReservation:
+    def test_ok_pending_to_canceled(self, mock_send, user, room):
+        r = Reservation.objects.create(
+            user=user,
+            room=room,
+            status=Reservation.Status.PENDING,
+            start_at=_dt(2025, 2, 1, 10, 0),
+            end_at=_dt(2025, 2, 1, 11, 0),
+        )
+        out = cancel_reservation(r)
+        assert out.status == Reservation.Status.CANCELED
+        mock_send.delay.assert_called_once_with(r.id, "canceled")
+
+    def test_ok_confirmed_to_canceled(self, mock_send, user, room):
+        r = Reservation.objects.create(
+            user=user,
+            room=room,
+            status=Reservation.Status.CONFIRMED,
+            start_at=_dt(2025, 2, 1, 10, 0),
+            end_at=_dt(2025, 2, 1, 11, 0),
+        )
+        out = cancel_reservation(r)
+        assert out.status == Reservation.Status.CANCELED
+        mock_send.delay.assert_called_once_with(r.id, "canceled")
+
+    def test_already_canceled_idempotent(self, mock_send, user, room):
+        r = Reservation.objects.create(
+            user=user,
+            room=room,
+            status=Reservation.Status.CANCELED,
+            start_at=_dt(2025, 2, 1, 10, 0),
+            end_at=_dt(2025, 2, 1, 11, 0),
+        )
+        out = cancel_reservation(r)
+        assert out.status == Reservation.Status.CANCELED
+        mock_send.delay.assert_not_called()
+
+    def test_invalid_status_raises(self, mock_send, user, room):
+        r = Reservation.objects.create(
+            user=user,
+            room=room,
+            status=Reservation.Status.CONFIRMED,
+            start_at=_dt(2025, 2, 1, 10, 0),
+            end_at=_dt(2025, 2, 1, 11, 0),
+        )
+        Reservation.objects.filter(pk=r.pk).update(status="x")
+        r.refresh_from_db()
+        with pytest.raises(ReservationValidationError, match="Nie można anulować"):
+            cancel_reservation(r)
+        mock_send.delay.assert_not_called()

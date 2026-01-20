@@ -8,11 +8,7 @@ from rest_framework.viewsets import ModelViewSet
 
 from accounts.permissions import IsAdmin
 from rooms.models import Room
-from rooms.serializers import (
-    RoomCreateUpdateSerializer,
-    RoomDetailSerializer,
-    RoomListSerializer,
-)
+from rooms.serializers import RoomCreateUpdateSerializer, RoomDetailSerializer, RoomListSerializer
 
 
 @extend_schema_view(
@@ -25,7 +21,14 @@ from rooms.serializers import (
             OpenApiExample(
                 "Response",
                 value=[
-                    {"id": 1, "name": "Sala A", "capacity": 6, "location": "Budynek A, parter", "created_at": "2025-01-01T00:00:00Z", "updated_at": "2025-01-01T00:00:00Z"},
+                    {
+                        "id": 1,
+                        "name": "Sala A",
+                        "capacity": 6,
+                        "location": "Budynek A, parter",
+                        "created_at": "2025-01-01T00:00:00Z",
+                        "updated_at": "2025-01-01T00:00:00Z",
+                    },
                 ],
                 response_only=True,
             ),

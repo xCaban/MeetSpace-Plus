@@ -1,10 +1,10 @@
 """Testy zadań Celery: expire_hold, send_notifications, reconcile_pending."""
 
 from datetime import timedelta
-from unittest.mock import patch
+
+from django.utils import timezone
 
 import pytest
-from django.utils import timezone
 
 from accounts.models import User
 from reservations.models import Reservation
@@ -93,8 +93,11 @@ class TestExpireHold:
 class TestSendNotifications:
     def test_runs_without_error(self, user, room):
         r = Reservation.objects.create(
-            user=user, room=room, status=Reservation.Status.PENDING,
-            start_at=_dt_offset(60), end_at=_dt_offset(120)
+            user=user,
+            room=room,
+            status=Reservation.Status.PENDING,
+            start_at=_dt_offset(60),
+            end_at=_dt_offset(120),
         )
         send_notifications(r.id, "created")  # dummy: log + hook; nie rzuca
 

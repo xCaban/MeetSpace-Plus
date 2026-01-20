@@ -1,0 +1,5 @@
+# flake8: używane przez pre-commit (repo root) i ewentualnie lokalne uruchomienia
+[flake8]
+max-line-length = 100
+extend-ignore = E203
+exclude = .git,__pycache__,migrations

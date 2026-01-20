@@ -29,10 +29,7 @@ class RoomDetailSerializer(serializers.ModelSerializer):
         }
     )
     def get_equipment(self, obj):
-        return [
-            {"name": re.equipment.name, "qty": re.qty}
-            for re in obj.roomequipment_set.all()
-        ]
+        return [{"name": re.equipment.name, "qty": re.qty} for re in obj.roomequipment_set.all()]
 
 
 class RoomCreateUpdateSerializer(serializers.ModelSerializer):

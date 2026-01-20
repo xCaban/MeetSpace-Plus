@@ -1,7 +1,13 @@
 """ViewSet i endpointy REST dla rezerwacji."""
 
 from django.utils.dateparse import parse_datetime
-from drf_spectacular.utils import OpenApiExample, OpenApiParameter, extend_schema, extend_schema_view
+
+from drf_spectacular.utils import (
+    OpenApiExample,
+    OpenApiParameter,
+    extend_schema,
+    extend_schema_view,
+)
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -29,11 +35,32 @@ from reservations.services.booking import (
         description="Lista z filtrami: room_id, from (start_at__gte), to (end_at__lte), status. Wymaga uwierzytelnienia.",
         parameters=[
             OpenApiParameter("room_id", int, OpenApiParameter.QUERY, required=False),
-            OpenApiParameter("from", str, OpenApiParameter.QUERY, required=False, description="ISO 8601, np. 2025-01-15T08:00:00Z"),
-            OpenApiParameter("to", str, OpenApiParameter.QUERY, required=False, description="ISO 8601, np. 2025-01-15T18:00:00Z"),
-            OpenApiParameter("status", str, OpenApiParameter.QUERY, required=False, enum=["pending", "confirmed", "canceled"]),
+            OpenApiParameter(
+                "from",
+                str,
+                OpenApiParameter.QUERY,
+                required=False,
+                description="ISO 8601, np. 2025-01-15T08:00:00Z",
+            ),
+            OpenApiParameter(
+                "to",
+                str,
+                OpenApiParameter.QUERY,
+                required=False,
+                description="ISO 8601, np. 2025-01-15T18:00:00Z",
+            ),
+            OpenApiParameter(
+                "status",
+                str,
+                OpenApiParameter.QUERY,
+                required=False,
+                enum=["pending", "confirmed", "canceled"],
+            ),
         ],
-        responses={200: ReservationListSerializer(many=True), 401: {"description": "Brak uwierzytelnienia"}},
+        responses={
+            200: ReservationListSerializer(many=True),
+            401: {"description": "Brak uwierzytelnienia"},
+        },
         examples=[
             OpenApiExample(
                 "Response",
@@ -205,7 +232,9 @@ class ReservationViewSet(ModelViewSet):
     def get_serializer_class(self):
         if self.action == "create":
             return ReservationCreateSerializer
-        return ReservationDetailSerializer if self.action == "retrieve" else ReservationListSerializer
+        return (
+            ReservationDetailSerializer if self.action == "retrieve" else ReservationListSerializer
+        )
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())

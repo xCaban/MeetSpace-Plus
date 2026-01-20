@@ -1,0 +1,32 @@
+# pre-commit: black, isort, flake8
+# Instalacja: pre-commit install
+# Uruchom na wszystkich: pre-commit run --all-files
+# Wymaga: pip install pre-commit (lub w requirements-dev.txt)
+
+repos:
+  - repo: https://github.com/psf/black
+    rev: 24.10.0
+    hooks:
+      - id: black
+        name: black
+        files: ^backend/.*\.py$
+        exclude: ^backend/.*/migrations/
+        args: [--line-length=100]
+
+  - repo: https://github.com/pycqa/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        name: isort
+        files: ^backend/.*\.py$
+        exclude: ^backend/.*/migrations/
+        args: [--profile=black, --line-length=100, --skip=migrations]
+
+  - repo: https://github.com/pycqa/flake8
+    rev: 7.1.1
+    hooks:
+      - id: flake8
+        name: flake8
+        files: ^backend/.*\.py$
+        exclude: ^backend/.*/migrations/
+        args: [--max-line-length=100, --extend-ignore=E203]

@@ -1,6 +1,6 @@
 """Logika tworzenia rezerwacji: walidacja, kolizje, hold, Celery."""
 
-from datetime import timedelta, time
+from datetime import time, timedelta
 
 from django.conf import settings
 from django.utils import timezone
@@ -42,9 +42,7 @@ def create_reservation(
         raise ReservationValidationError("start_at musi być wcześniej niż end_at")
 
     if start_at.date() != end_at.date():
-        raise ReservationValidationError(
-            "rezerwacja musi mieścić się w jednym dniu"
-        )
+        raise ReservationValidationError("rezerwacja musi mieścić się w jednym dniu")
 
     if start_at.tzinfo is None or end_at.tzinfo is None:
         raise ReservationValidationError("start_at i end_at muszą być timezone-aware")
@@ -85,9 +83,7 @@ def confirm_reservation(reservation):
     Uprawnienia (owner lub admin) weryfikuje warstwa widoków.
     """
     if reservation.status != Reservation.Status.PENDING:
-        raise ReservationValidationError(
-            "Tylko rezerwacje w statusie pending można potwierdzić"
-        )
+        raise ReservationValidationError("Tylko rezerwacje w statusie pending można potwierdzić")
     reservation.status = Reservation.Status.CONFIRMED
     reservation.save(update_fields=["status", "updated_at"])
     send_notifications.delay(reservation.id, "confirmed")
