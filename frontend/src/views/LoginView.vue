@@ -1,0 +1,101 @@
+<script setup lang="ts">
+import { ref, reactive } from "vue"
+import { useRouter, useRoute } from "vue-router"
+import { useAuthStore } from "@/stores/auth"
+import BaseButton from "@/components/base/BaseButton.vue"
+import BaseInput from "@/components/base/BaseInput.vue"
+
+const router = useRouter()
+const route = useRoute()
+const auth = useAuthStore()
+
+const loading = ref(false)
+const error = ref<string | null>(null)
+const form = reactive({ email: "", password: "" })
+
+async function onSubmit() {
+  loading.value = true
+  error.value = null
+  try {
+    await auth.login(form)
+    const redirect = (route.query.redirect as string) || "/rooms"
+    router.replace(redirect.startsWith("/") ? redirect : "/rooms")
+  } catch (e: unknown) {
+    const err = e as { message?: string }
+    error.value = err?.message ?? "Logowanie nie powiodło się"
+  } finally {
+    loading.value = false
+  }
+}
+</script>
+
+<template>
+  <div class="login">
+    <div class="login-card">
+      <h1 class="login-title">MeetSpace Plus</h1>
+      <p class="login-subtitle">Zaloguj się do systemu rezerwacji sal</p>
+
+      <form class="login-form" @submit.prevent="onSubmit">
+        <BaseInput
+          v-model="form.email"
+          type="email"
+          label="E-mail"
+          name="email"
+          placeholder="user@example.com"
+          :error="error ?? undefined"
+        />
+        <BaseInput
+          v-model="form.password"
+          type="password"
+          label="Hasło"
+          name="password"
+          placeholder="••••••••"
+        />
+        <BaseButton type="submit" :disabled="loading" block>
+          {{ loading ? "Logowanie…" : "Zaloguj" }}
+        </BaseButton>
+      </form>
+    </div>
+  </div>
+</template>
+
+<style scoped>
+.login {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  background: var(--color-bg-alt);
+}
+
+.login-card {
+  width: 100%;
+  max-width: 24rem;
+  padding: var(--space-8);
+  background: var(--color-bg);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-lg);
+}
+
+.login-title {
+  font-size: var(--text-2xl);
+  font-weight: var(--font-bold);
+  text-align: center;
+  margin-bottom: var(--space-2);
+}
+
+.login-subtitle {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  text-align: center;
+  margin-bottom: var(--space-6);
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+</style>
