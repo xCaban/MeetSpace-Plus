@@ -13,6 +13,7 @@ export const useReservationsStore = defineStore("reservations", () => {
     from?: string
     to?: string
     status?: string
+    mine?: boolean
   }) {
     loading.value = true
     error.value = null
@@ -60,6 +61,23 @@ export const useReservationsStore = defineStore("reservations", () => {
     }
   }
 
+  async function confirm(id: number) {
+    loading.value = true
+    error.value = null
+    try {
+      const { data } = await api.post<Reservation>(`/reservations/${id}/confirm/`)
+      const i = list.value.findIndex((r) => r.id === id)
+      if (i >= 0) list.value[i] = data
+      return data
+    } catch (e: unknown) {
+      const err = e as { message?: string }
+      error.value = err?.message ?? "Błąd potwierdzania rezerwacji"
+      throw e
+    } finally {
+      loading.value = false
+    }
+  }
+
   async function cancel(id: number) {
     loading.value = true
     error.value = null
@@ -78,15 +96,20 @@ export const useReservationsStore = defineStore("reservations", () => {
   }
 
   const listCount = computed(() => list.value.length)
+  const isListEmpty = computed(() => list.value.length === 0 && !loading.value)
+  const hasError = computed(() => error.value != null)
 
   return {
     list,
     loading,
     error,
     listCount,
+    isListEmpty,
+    hasError,
     fetchList,
     fetchOne,
     create,
+    confirm,
     cancel,
   }
 })

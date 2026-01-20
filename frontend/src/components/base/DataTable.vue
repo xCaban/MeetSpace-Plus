@@ -11,6 +11,8 @@ interface Props {
   data: Record<string, unknown>[]
   loading?: boolean
   emptyText?: string
+  /** Etykieta dla czytników ekranu (a11y). */
+  ariaLabel?: string
 }
 
 withDefaults(defineProps<Props>(), {
@@ -21,13 +23,14 @@ withDefaults(defineProps<Props>(), {
 
 <template>
   <div class="table-wrap">
-    <table class="table">
+    <table class="table" role="table" :aria-label="ariaLabel">
       <thead>
         <tr>
           <th
             v-for="col in columns"
             :key="col.key"
             :class="col.class"
+            scope="col"
           >
             {{ col.label }}
           </th>

@@ -1,70 +1,259 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from "vue"
+import { ref, computed, watch, onMounted } from "vue"
 import { useRoomsStore } from "@/stores/rooms"
 import { useReservationsStore } from "@/stores/reservations"
 import BaseSelect from "@/components/base/BaseSelect.vue"
+import type { Reservation } from "@/api/types"
+import type { SelectOption } from "@/components/base/BaseSelect.vue"
 
 const rooms = useRoomsStore()
 const reservations = useReservationsStore()
 
+const viewMode = ref<"week" | "day">("week")
+const selectedDate = ref(new Date())
 const selectedRoomId = ref<number | "">("")
-const from = ref("")
-const to = ref("")
 
-const roomOptions = computed(() => [
-  { value: "" as const, label: "— Wszystkie sale —" },
-  ...rooms.list.map((r) => ({ value: r.id, label: r.name })),
-])
+const HOUR_START = 8
+const HOUR_END = 21
+
+const roomOptions = computed<SelectOption[]>(() =>
+  rooms.list.map((r) => ({ value: r.id, label: r.name }))
+)
+
+function toISOStart(d: Date): string {
+  const x = new Date(d)
+  x.setHours(0, 0, 0, 0)
+  return x.toISOString()
+}
+
+function toISOEnd(d: Date): string {
+  const x = new Date(d)
+  x.setHours(23, 59, 59, 999)
+  return x.toISOString()
+}
+
+const range = computed(() => {
+  const d = new Date(selectedDate.value)
+  if (viewMode.value === "day") {
+    return { from: toISOStart(d), to: toISOEnd(d) }
+  }
+  const day = d.getDay()
+  const diff = day === 0 ? -6 : 1 - day
+  const mon = new Date(d)
+  mon.setDate(mon.getDate() + diff)
+  mon.setHours(0, 0, 0, 0)
+  const sun = new Date(mon)
+  sun.setDate(sun.getDate() + 6)
+  sun.setHours(23, 59, 59, 999)
+  return { from: mon.toISOString(), to: sun.toISOString() }
+})
+
+const columns = computed(() => {
+  if (viewMode.value === "day") {
+    const d = selectedDate.value
+    return [{ key: "hour", label: formatDate(d) }]
+  }
+  const mon = new Date(selectedDate.value)
+  const day = mon.getDay()
+  const diff = day === 0 ? -6 : 1 - day
+  mon.setDate(mon.getDate() + diff)
+  const out: { key: string; label: string }[] = [{ key: "hour", label: "Godz." }]
+  const days = ["Nd", "Pn", "Wt", "Śr", "Cz", "Pt", "So"]
+  for (let i = 0; i < 7; i++) {
+    const x = new Date(mon)
+    x.setDate(x.getDate() + i)
+    out.push({ key: `d${i}`, label: `${days[x.getDay()]} ${x.getDate()}` })
+  }
+  return out
+})
+
+const hours = computed(() => {
+  const h: number[] = []
+  for (let i = HOUR_START; i <= HOUR_END; i++) h.push(i)
+  return h
+})
+
+function formatDate(d: Date): string {
+  return d.toLocaleDateString("pl-PL", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  })
+}
+
+function formatHour(h: number): string {
+  return `${String(h).padStart(2, "0")}:00`
+}
+
+function getSlotStart(dayOffset: number, hour: number): Date {
+  const d = new Date(selectedDate.value)
+  if (viewMode.value === "day") {
+    d.setHours(hour, 0, 0, 0)
+    return d
+  }
+  const day = d.getDay()
+  const diff = day === 0 ? -6 : 1 - day
+  d.setDate(d.getDate() + diff + dayOffset)
+  d.setHours(hour, 0, 0, 0)
+  return d
+}
+
+function getSlotEnd(dayOffset: number, hour: number): Date {
+  const s = getSlotStart(dayOffset, hour)
+  const e = new Date(s)
+  e.setHours(e.getHours() + 1, 0, 0, 0)
+  return e
+}
+
+function isSlotOccupied(dayOffset: number, hour: number): boolean {
+  const list = reservations.list as Reservation[]
+  const slotStart = getSlotStart(dayOffset, hour).getTime()
+  const slotEnd = getSlotEnd(dayOffset, hour).getTime()
+  return list.some((r) => {
+    const rs = new Date(r.start_at).getTime()
+    const re = new Date(r.end_at).getTime()
+    return rs < slotEnd && re > slotStart
+  })
+}
+
+const dayCount = computed(() => (viewMode.value === "day" ? 1 : 7))
+
+function prev() {
+  const d = new Date(selectedDate.value)
+  d.setDate(d.getDate() - (viewMode.value === "day" ? 1 : 7))
+  selectedDate.value = d
+}
+
+function next() {
+  const d = new Date(selectedDate.value)
+  d.setDate(d.getDate() + (viewMode.value === "day" ? 1 : 7))
+  selectedDate.value = d
+}
+
+function today() {
+  selectedDate.value = new Date()
+}
+
+async function load() {
+  const rid = selectedRoomId.value
+  if (rid === "") return
+  await reservations.fetchList({
+    room_id: rid as number,
+    from: range.value.from,
+    to: range.value.to,
+  })
+}
+
+watch([selectedRoomId, range, viewMode], () => {
+  load()
+})
 
 onMounted(async () => {
   await rooms.fetchList()
-  const today = new Date().toISOString().slice(0, 10)
-  from.value = `${today}T00:00:00`
-  to.value = `${today}T23:59:59`
-  await load()
+  if (rooms.list.length > 0 && selectedRoomId.value === "") {
+    selectedRoomId.value = rooms.list[0].id
+  }
 })
-
-async function load() {
-  await reservations.fetchList({
-    room_id: selectedRoomId.value === "" ? undefined : (selectedRoomId.value as number),
-    from: from.value || undefined,
-    to: to.value || undefined,
-  })
-}
 </script>
 
 <template>
   <div class="page">
-    <h1 class="page-title">Kalendarz rezerwacji</h1>
+    <h1 class="page-title">Kalendarz – dostępność sali</h1>
 
-    <div class="filters">
-      <BaseSelect
-        v-model="selectedRoomId"
-        :options="roomOptions"
-        label="Sala"
-        @update:model-value="load"
-      />
-      <div class="filter-row">
-        <label class="filter-label">Od</label>
-        <input v-model="from" type="datetime-local" class="filter-input" @change="load" />
+    <div class="toolbar">
+      <div class="toolbar-group">
+        <BaseSelect
+          v-model="selectedRoomId"
+          :options="roomOptions"
+          label="Sala"
+          name="cal_room"
+          placeholder="— Wybierz salę —"
+        />
       </div>
-      <div class="filter-row">
-        <label class="filter-label">Do</label>
-        <input v-model="to" type="datetime-local" class="filter-input" @change="load" />
+      <div class="toolbar-group view-toggle">
+        <button
+          type="button"
+          class="toggle-btn"
+          :class="{ 'toggle-btn--active': viewMode === 'day' }"
+          :aria-pressed="viewMode === 'day'"
+          aria-label="Widok dzień"
+          @click="viewMode = 'day'"
+        >
+          Dzień
+        </button>
+        <button
+          type="button"
+          class="toggle-btn"
+          :class="{ 'toggle-btn--active': viewMode === 'week' }"
+          :aria-pressed="viewMode === 'week'"
+          aria-label="Widok tydzień"
+          @click="viewMode = 'week'"
+        >
+          Tydzień
+        </button>
+      </div>
+      <div class="toolbar-group nav">
+        <button type="button" class="nav-btn" aria-label="Poprzedni" @click="prev">
+          ‹
+        </button>
+        <button type="button" class="nav-btn today" @click="today">Today</button>
+        <button type="button" class="nav-btn" aria-label="Następny" @click="next">
+          ›
+        </button>
       </div>
     </div>
 
-    <div v-if="reservations.error" class="page-error">{{ reservations.error }}</div>
+    <p v-if="reservations.error" class="page-error" role="alert">
+      {{ reservations.error }}
+    </p>
 
-    <ul v-if="!reservations.loading && reservations.list.length" class="res-list">
-      <li v-for="r in reservations.list" :key="r.id" class="res-item">
-        <span class="res-room">{{ r.room_name }}</span>
-        <span class="res-time">{{ r.start_at }} – {{ r.end_at }}</span>
-        <span class="res-user">{{ r.user_email }}</span>
-      </li>
-    </ul>
-    <p v-else-if="!reservations.loading" class="empty">Brak rezerwacji w wybranym okresie.</p>
-    <p v-else class="empty">Ładowanie…</p>
+    <div
+      v-if="selectedRoomId === ''"
+      class="empty-hint"
+      role="status"
+    >
+      Wybierz salę, aby zobaczyć dostępność.
+    </div>
+
+    <div
+      v-else
+      class="calendar-wrap"
+      role="region"
+      aria-label="Siatka dostępności"
+    >
+      <table class="cal-table" role="table" aria-label="Dostępność sali wg godziny i dnia">
+        <thead>
+          <tr>
+            <th
+              v-for="col in columns"
+              :key="col.key"
+              scope="col"
+              class="cal-th"
+            >
+              {{ col.label }}
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-if="reservations.loading">
+            <td :colspan="columns.length" class="cal-loading">Ładowanie…</td>
+          </tr>
+          <template v-else>
+            <tr v-for="h in hours" :key="h">
+              <th scope="row" class="cal-hour">{{ formatHour(h) }}</th>
+              <td
+                v-for="d in dayCount"
+                :key="d - 1"
+                class="cal-cell"
+                :class="{ 'cal-cell--busy': isSlotOccupied(d - 1, h) }"
+              >
+                {{ isSlotOccupied(d - 1, h) ? "zajęte" : "wolne" }}
+              </td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+    </div>
   </div>
 </template>
 
@@ -85,63 +274,95 @@ async function load() {
   font-size: var(--text-sm);
 }
 
-.filters {
+.toolbar {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-4);
   align-items: flex-end;
 }
 
-.filter-row {
+.toolbar-group {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
-
-.filter-label {
-  font-size: var(--text-sm);
-  font-weight: var(--font-medium);
-}
-
-.filter-input {
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  font-size: var(--text-sm);
-}
-
-.res-list {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: var(--space-2);
 }
 
-.res-item {
-  display: grid;
-  grid-template-columns: 1fr 1fr auto;
-  gap: var(--space-4);
-  padding: var(--space-3);
+.view-toggle {
+  display: flex;
+}
+
+.toggle-btn {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-sm);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
+  background: var(--color-bg);
+  cursor: pointer;
+}
+
+.toggle-btn--active {
+  background: var(--color-primary);
+  color: white;
+  border-color: var(--color-primary);
+}
+
+.nav-btn {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  cursor: pointer;
+}
+
+.nav-btn.today {
+  min-width: 4rem;
+}
+
+.empty-hint {
+  color: var(--color-text-muted);
+  padding: var(--space-6);
+}
+
+.calendar-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.cal-table {
+  width: 100%;
+  min-width: 320px;
+  border-collapse: collapse;
   font-size: var(--text-sm);
 }
 
-@media (max-width: 640px) {
-  .res-item {
-    grid-template-columns: 1fr;
-  }
+.cal-th,
+.cal-hour,
+.cal-cell {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  text-align: center;
 }
 
-.res-room {
+.cal-th {
+  font-weight: var(--font-semibold);
+  background: var(--color-bg-alt);
+}
+
+.cal-hour {
   font-weight: var(--font-medium);
+  text-align: right;
+  white-space: nowrap;
 }
 
-.res-time {
-  color: var(--color-text-muted);
+.cal-cell--busy {
+  background: var(--color-danger-muted);
+  color: var(--color-danger);
 }
 
-.empty {
+.cal-loading {
+  text-align: center;
   color: var(--color-text-muted);
   padding: var(--space-6);
 }

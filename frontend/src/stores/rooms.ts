@@ -9,10 +9,36 @@ export interface RoomCreatePayload {
   location?: string
 }
 
+export interface RoomFilters {
+  capacity_min?: number
+  location?: string
+}
+
 export const useRoomsStore = defineStore("rooms", () => {
   const list = ref<Room[]>([])
   const loading = ref(false)
   const error = ref<string | null>(null)
+  const filters = ref<RoomFilters>({})
+
+  function setFilters(p: Partial<RoomFilters>) {
+    filters.value = { ...filters.value, ...p }
+  }
+
+  const filteredList = computed(() => {
+    const l = list.value
+    const { capacity_min, location } = filters.value
+    return l.filter((r) => {
+      const capOk =
+        capacity_min == null || capacity_min <= 0 || r.capacity >= capacity_min
+      const locOk =
+        location == null ||
+        String(location).trim() === "" ||
+        (r.location || "")
+          .toLowerCase()
+          .includes(String(location).trim().toLowerCase())
+      return capOk && locOk
+    })
+  })
 
   async function fetchList() {
     loading.value = true
@@ -94,12 +120,19 @@ export const useRoomsStore = defineStore("rooms", () => {
   }
 
   const listCount = computed(() => list.value.length)
+  const isListEmpty = computed(() => list.value.length === 0 && !loading.value)
+  const hasError = computed(() => error.value != null)
 
   return {
     list,
     loading,
     error,
     listCount,
+    filters,
+    setFilters,
+    filteredList,
+    isListEmpty,
+    hasError,
     fetchList,
     fetchOne,
     create,

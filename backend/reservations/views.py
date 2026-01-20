@@ -36,6 +36,13 @@ from reservations.services.booking import (
         parameters=[
             OpenApiParameter("room_id", int, OpenApiParameter.QUERY, required=False),
             OpenApiParameter(
+                "mine",
+                str,
+                OpenApiParameter.QUERY,
+                required=False,
+                description="Jeśli 'true' lub '1', tylko rezerwacje zalogowanego użytkownika.",
+            ),
+            OpenApiParameter(
                 "from",
                 str,
                 OpenApiParameter.QUERY,
@@ -227,6 +234,9 @@ class ReservationViewSet(ModelViewSet):
         status_ = self.request.query_params.get("status")
         if status_ and status_ in dict(Reservation.Status.choices):
             qs = qs.filter(status=status_)
+        mine = self.request.query_params.get("mine", "").lower()
+        if mine in ("true", "1"):
+            qs = qs.filter(user=self.request.user)
         return qs
 
     def get_serializer_class(self):

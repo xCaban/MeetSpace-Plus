@@ -1,7 +1,7 @@
 <script setup lang="ts">
 interface Props {
   modelValue: string | number
-  type?: "text" | "email" | "password" | "number"
+  type?: "text" | "email" | "password" | "number" | "datetime-local"
   label?: string
   name?: string
   placeholder?: string
@@ -19,7 +19,14 @@ const emit = defineEmits<{ "update:modelValue": [v: string | number] }>()
 
 function onInput(e: Event) {
   const t = e.target as HTMLInputElement
-  emit("update:modelValue", props.type === "number" ? (t.valueAsNumber ?? t.value) : t.value)
+  if (props.type === "number") {
+    const v = t.valueAsNumber
+    emit("update:modelValue", Number.isNaN(v) ? (t.value as string) : v)
+  } else if (props.type === "datetime-local") {
+    emit("update:modelValue", t.value)
+  } else {
+    emit("update:modelValue", t.value)
+  }
 }
 </script>
 
@@ -37,7 +44,7 @@ function onInput(e: Event) {
       :class="{ 'input--error': error }"
       @input="onInput"
     />
-    <p v-if="error" class="field-error">{{ error }}</p>
+    <p v-if="error" class="field-error" role="alert">{{ error }}</p>
     <p v-else-if="hint" class="field-hint">{{ hint }}</p>
   </div>
 </template>

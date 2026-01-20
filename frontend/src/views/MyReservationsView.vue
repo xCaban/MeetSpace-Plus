@@ -9,7 +9,7 @@ import type { Reservation } from "@/api/types"
 const res = useReservationsStore()
 
 onMounted(() => {
-  res.fetchList()
+  res.fetchList({ mine: true })
 })
 
 const columns = [
@@ -23,7 +23,7 @@ const columns = [
 function rowFor(r: Reservation) {
   return {
     ...r,
-    actions: "cancel",
+    actions: "actions",
   }
 }
 
@@ -32,6 +32,14 @@ function badgeVariant(s: string) {
   if (s === "pending") return "warning"
   if (s === "canceled") return "danger"
   return "default"
+}
+
+async function onConfirm(id: number) {
+  try {
+    await res.confirm(id)
+  } catch {
+    /* error in store */
+  }
 }
 
 async function onCancel(id: number) {
@@ -52,19 +60,32 @@ async function onCancel(id: number) {
       :data="res.list.map(rowFor)"
       :loading="res.loading"
       empty-text="Brak rezerwacji"
+      aria-label="Lista moich rezerwacji"
     >
       <template #cell-status="{ value }">
         <Badge :variant="badgeVariant(value)">{{ value }}</Badge>
       </template>
       <template #cell-actions="{ row }">
-        <BaseButton
-          v-if="row.status !== 'canceled'"
-          variant="danger"
-          size="sm"
-          @click="onCancel(row.id)"
-        >
-          Anuluj
-        </BaseButton>
+        <div class="cell-actions">
+          <BaseButton
+            v-if="row.status === 'pending'"
+            variant="primary"
+            size="sm"
+            :disabled="res.loading"
+            @click="onConfirm(row.id)"
+          >
+            Potwierdź
+          </BaseButton>
+          <BaseButton
+            v-if="row.status !== 'canceled'"
+            variant="danger"
+            size="sm"
+            :disabled="res.loading"
+            @click="onCancel(row.id)"
+          >
+            Anuluj
+          </BaseButton>
+        </div>
       </template>
     </DataTable>
   </div>
@@ -85,5 +106,11 @@ async function onCancel(id: number) {
 .page-error {
   color: var(--color-danger);
   font-size: var(--text-sm);
+}
+
+.cell-actions {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
 }
 </style>

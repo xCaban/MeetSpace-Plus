@@ -49,7 +49,7 @@ function onChange(e: Event) {
         {{ opt.label }}
       </option>
     </select>
-    <p v-if="error" class="field-error">{{ error }}</p>
+    <p v-if="error" class="field-error" role="alert">{{ error }}</p>
   </div>
 </template>
 
