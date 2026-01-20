@@ -1,4 +1,6 @@
 import os
+from datetime import timedelta
+from datetime import time as _time
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -18,6 +20,8 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
+    "rest_framework_simplejwt",
+    "rest_framework_simplejwt.token_blacklist",
     "drf_spectacular",
     "accounts",
     "rooms",
@@ -100,6 +104,20 @@ else:
 # DRF
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
+    ],
+}
+
+# JWT (djangorestframework-simplejwt); override via .env: JWT_ACCESS_TOKEN_LIFETIME_MINUTES, JWT_REFRESH_TOKEN_LIFETIME_DAYS
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(
+        minutes=int(os.environ.get("JWT_ACCESS_TOKEN_LIFETIME_MINUTES", "15"))
+    ),
+    "REFRESH_TOKEN_LIFETIME": timedelta(
+        days=int(os.environ.get("JWT_REFRESH_TOKEN_LIFETIME_DAYS", "7"))
+    ),
 }
 
 # drf-spectacular
@@ -107,6 +125,11 @@ SPECTACULAR_SETTINGS = {
     "TITLE": "MeetSpace Plus API",
     "VERSION": "1.0.0",
 }
+
+# Rezerwacje: godziny robocze (parametryzowalne w create_reservation)
+RESERVATION_WORK_START = _time(8, 0)
+RESERVATION_WORK_END = _time(18, 0)
+RESERVATION_HOLD_MINUTES = 15
 
 # Celery
 CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "amqp://guest:guest@localhost:5672//")
