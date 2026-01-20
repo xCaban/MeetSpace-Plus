@@ -17,16 +17,41 @@ from rooms.serializers import (
 
 @extend_schema_view(
     list=extend_schema(
+        tags=["rooms"],
         summary="Lista sal",
         description="Publiczna lista sal. Bez uwierzytelnienia.",
         responses={200: RoomListSerializer(many=True)},
+        examples=[
+            OpenApiExample(
+                "Response",
+                value=[
+                    {"id": 1, "name": "Sala A", "created_at": "2025-01-01T00:00:00Z", "updated_at": "2025-01-01T00:00:00Z"},
+                ],
+                response_only=True,
+            ),
+        ],
     ),
     retrieve=extend_schema(
+        tags=["rooms"],
         summary="Szczegóły sali",
         description="Publiczne szczegóły sali (z wyposażeniem). Bez uwierzytelnienia.",
         responses={200: RoomDetailSerializer, 404: {"description": "Nie znaleziono sali"}},
+        examples=[
+            OpenApiExample(
+                "Response",
+                value={
+                    "id": 1,
+                    "name": "Sala A",
+                    "equipment": [{"name": "Projektor", "qty": 1}, {"name": "Tablica", "qty": 1}],
+                    "created_at": "2025-01-01T00:00:00Z",
+                    "updated_at": "2025-01-01T00:00:00Z",
+                },
+                response_only=True,
+            ),
+        ],
     ),
     create=extend_schema(
+        tags=["rooms"],
         summary="Dodaj salę (admin)",
         description="Tylko admin. Tworzy nową salę.",
         request=RoomCreateUpdateSerializer,
@@ -41,6 +66,7 @@ from rooms.serializers import (
         ],
     ),
     partial_update=extend_schema(
+        tags=["rooms"],
         summary="Aktualizuj salę (admin)",
         description="Tylko admin. Częściowa aktualizacja (PATCH).",
         request=RoomCreateUpdateSerializer,
@@ -58,6 +84,7 @@ from rooms.serializers import (
         ],
     ),
     destroy=extend_schema(
+        tags=["rooms"],
         summary="Usuń salę (admin)",
         description="Tylko admin.",
         responses={

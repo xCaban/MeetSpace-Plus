@@ -120,9 +120,10 @@ SIMPLE_JWT = {
     ),
 }
 
-# drf-spectacular
+# drf-spectacular: /api/schema/ (JSON: ?format=json), /api/docs/ (Swagger UI)
 SPECTACULAR_SETTINGS = {
     "TITLE": "MeetSpace Plus API",
+    "DESCRIPTION": "API systemu rezerwacji sal konferencyjnych MeetSpace Plus. Uwierzytelnianie JWT (SPA), role admin/user, rezerwacje z holdem 15 min i asynchronicznym wygaszaniem.",
     "VERSION": "1.0.0",
 }
 

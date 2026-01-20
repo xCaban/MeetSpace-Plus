@@ -24,6 +24,7 @@ from reservations.services.booking import (
 
 @extend_schema_view(
     list=extend_schema(
+        tags=["reservations"],
         summary="Lista rezerwacji",
         description="Lista z filtrami: room_id, from (start_at__gte), to (end_at__lte), status. Wymaga uwierzytelnienia.",
         parameters=[
@@ -33,8 +34,30 @@ from reservations.services.booking import (
             OpenApiParameter("status", str, OpenApiParameter.QUERY, required=False, enum=["pending", "confirmed", "canceled"]),
         ],
         responses={200: ReservationListSerializer(many=True), 401: {"description": "Brak uwierzytelnienia"}},
+        examples=[
+            OpenApiExample(
+                "Response",
+                value=[
+                    {
+                        "id": 1,
+                        "user": 1,
+                        "user_email": "user@example.com",
+                        "room": 1,
+                        "room_name": "Sala A",
+                        "status": "confirmed",
+                        "start_at": "2025-01-15T09:00:00+01:00",
+                        "end_at": "2025-01-15T10:00:00+01:00",
+                        "hold_expires_at": None,
+                        "created_at": "2025-01-14T12:00:00Z",
+                        "updated_at": "2025-01-14T12:05:00Z",
+                    },
+                ],
+                response_only=True,
+            ),
+        ],
     ),
     retrieve=extend_schema(
+        tags=["reservations"],
         summary="Szczegóły rezerwacji",
         description="Właściciel lub admin.",
         responses={
@@ -43,8 +66,28 @@ from reservations.services.booking import (
             403: {"description": "Brak uprawnień"},
             404: {"description": "Nie znaleziono rezerwacji"},
         },
+        examples=[
+            OpenApiExample(
+                "Response",
+                value={
+                    "id": 1,
+                    "user": 1,
+                    "user_email": "user@example.com",
+                    "room": 1,
+                    "room_name": "Sala A",
+                    "status": "confirmed",
+                    "start_at": "2025-01-15T09:00:00+01:00",
+                    "end_at": "2025-01-15T10:00:00+01:00",
+                    "hold_expires_at": None,
+                    "created_at": "2025-01-14T12:00:00Z",
+                    "updated_at": "2025-01-14T12:05:00Z",
+                },
+                response_only=True,
+            ),
+        ],
     ),
     create=extend_schema(
+        tags=["reservations"],
         summary="Utwórz rezerwację",
         description="Tworzy rezerwację (pending), ustawia hold 15 min, planuje expire_hold. Wymaga uwierzytelnienia.",
         request=ReservationCreateSerializer,
@@ -68,6 +111,7 @@ from reservations.services.booking import (
         ],
     ),
     confirm=extend_schema(
+        tags=["reservations"],
         summary="Potwierdź rezerwację",
         description="POST /reservations/{id}/confirm. Właściciel lub admin. pending → confirmed.",
         request=None,
@@ -78,8 +122,28 @@ from reservations.services.booking import (
             403: {"description": "Brak uprawnień"},
             404: {"description": "Nie znaleziono rezerwacji"},
         },
+        examples=[
+            OpenApiExample(
+                "Response",
+                value={
+                    "id": 1,
+                    "user": 1,
+                    "user_email": "user@example.com",
+                    "room": 1,
+                    "room_name": "Sala A",
+                    "status": "confirmed",
+                    "start_at": "2025-01-15T09:00:00+01:00",
+                    "end_at": "2025-01-15T10:00:00+01:00",
+                    "hold_expires_at": None,
+                    "created_at": "2025-01-14T12:00:00Z",
+                    "updated_at": "2025-01-14T12:05:00Z",
+                },
+                response_only=True,
+            ),
+        ],
     ),
     cancel=extend_schema(
+        tags=["reservations"],
         summary="Anuluj rezerwację",
         description="POST /reservations/{id}/cancel. Właściciel lub admin. pending/confirmed → canceled.",
         request=None,
@@ -90,6 +154,25 @@ from reservations.services.booking import (
             403: {"description": "Brak uprawnień"},
             404: {"description": "Nie znaleziono rezerwacji"},
         },
+        examples=[
+            OpenApiExample(
+                "Response",
+                value={
+                    "id": 1,
+                    "user": 1,
+                    "user_email": "user@example.com",
+                    "room": 1,
+                    "room_name": "Sala A",
+                    "status": "canceled",
+                    "start_at": "2025-01-15T09:00:00+01:00",
+                    "end_at": "2025-01-15T10:00:00+01:00",
+                    "hold_expires_at": None,
+                    "created_at": "2025-01-14T12:00:00Z",
+                    "updated_at": "2025-01-14T12:10:00Z",
+                },
+                response_only=True,
+            ),
+        ],
     ),
 )
 class ReservationViewSet(ModelViewSet):
