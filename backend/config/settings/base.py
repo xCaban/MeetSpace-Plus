@@ -13,7 +13,6 @@ DEBUG = os.environ.get("DEBUG", "0").lower() in ("1", "true", "yes")
 ALLOWED_HOSTS: list[str] = []
 
 INSTALLED_APPS = [
-    "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",

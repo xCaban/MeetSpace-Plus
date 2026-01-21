@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.contrib.auth.password_validation import validate_password
 
 from rest_framework import serializers
 
@@ -35,3 +36,36 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     def get_roles(self, obj):
         return list(Role.objects.filter(userrole__user=obj).values_list("name", flat=True))
+
+
+class RegisterSerializer(serializers.Serializer):
+    email = serializers.EmailField(write_only=True)
+    password = serializers.CharField(write_only=True, style={"input_type": "password"})
+    password_confirm = serializers.CharField(write_only=True, style={"input_type": "password"})
+    first_name = serializers.CharField(required=False, allow_blank=True, default="")
+    last_name = serializers.CharField(required=False, allow_blank=True, default="")
+
+    def validate_email(self, value):
+        if User.objects.filter(email__iexact=value).exists():
+            raise serializers.ValidationError("Użytkownik z tym adresem e-mail już istnieje.")
+        return value.lower()
+
+    def validate_password(self, value):
+        validate_password(value)
+        return value
+
+    def validate(self, data):
+        if data["password"] != data["password_confirm"]:
+            raise serializers.ValidationError({"password_confirm": "Hasła nie są zgodne."})
+        return data
+
+    def create(self, validated_data):
+        validated_data.pop("password_confirm")
+        user = User.objects.create_user(
+            username=validated_data["email"],
+            email=validated_data["email"],
+            password=validated_data["password"],
+            first_name=validated_data.get("first_name", ""),
+            last_name=validated_data.get("last_name", ""),
+        )
+        return user

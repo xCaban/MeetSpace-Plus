@@ -13,14 +13,24 @@ const loading = ref(false)
 const error = ref<string | null>(null)
 const emailError = ref<string | null>(null)
 const passwordError = ref<string | null>(null)
-const form = reactive({ email: "", password: "" })
+const passwordConfirmError = ref<string | null>(null)
+
+const form = reactive({
+  email: "",
+  password: "",
+  password_confirm: "",
+  first_name: "",
+  last_name: "",
+})
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 function validate(): boolean {
   emailError.value = null
   passwordError.value = null
+  passwordConfirmError.value = null
   let ok = true
+
   if (!form.email.trim()) {
     emailError.value = "E-mail jest wymagany"
     ok = false
@@ -28,10 +38,23 @@ function validate(): boolean {
     emailError.value = "Nieprawidłowy format e-mail"
     ok = false
   }
+
   if (!form.password) {
     passwordError.value = "Hasło jest wymagane"
     ok = false
+  } else if (form.password.length < 8) {
+    passwordError.value = "Hasło musi mieć co najmniej 8 znaków"
+    ok = false
   }
+
+  if (!form.password_confirm) {
+    passwordConfirmError.value = "Potwierdzenie hasła jest wymagane"
+    ok = false
+  } else if (form.password !== form.password_confirm) {
+    passwordConfirmError.value = "Hasła nie są zgodne"
+    ok = false
+  }
+
   return ok
 }
 
@@ -40,12 +63,12 @@ async function onSubmit() {
   if (!validate()) return
   loading.value = true
   try {
-    await auth.login(form)
+    await auth.register(form)
     const redirect = (route.query.redirect as string) || "/rooms"
     router.replace(redirect.startsWith("/") ? redirect : "/rooms")
   } catch (e: unknown) {
     const err = e as { message?: string }
-    error.value = err?.message ?? "Logowanie nie powiodło się"
+    error.value = err?.message ?? "Rejestracja nie powiodła się"
   } finally {
     loading.value = false
   }
@@ -53,12 +76,12 @@ async function onSubmit() {
 </script>
 
 <template>
-  <div class="login">
-    <div class="login-card">
-      <h1 class="login-title">MeetSpace Plus</h1>
-      <p class="login-subtitle">Zaloguj się do systemu rezerwacji sal</p>
+  <div class="register">
+    <div class="register-card">
+      <h1 class="register-title">MeetSpace Plus</h1>
+      <p class="register-subtitle">Utwórz nowe konto</p>
 
-      <form class="login-form" @submit.prevent="onSubmit">
+      <form class="register-form" @submit.prevent="onSubmit">
         <BaseInput
           v-model="form.email"
           type="email"
@@ -75,22 +98,44 @@ async function onSubmit() {
           placeholder="••••••••"
           :error="passwordError ?? undefined"
         />
-        <p v-if="error" class="login-form-error">{{ error }}</p>
+        <BaseInput
+          v-model="form.password_confirm"
+          type="password"
+          label="Potwierdź hasło"
+          name="password_confirm"
+          placeholder="••••••••"
+          :error="passwordConfirmError ?? undefined"
+        />
+        <BaseInput
+          v-model="form.first_name"
+          type="text"
+          label="Imię (opcjonalne)"
+          name="first_name"
+          placeholder="Jan"
+        />
+        <BaseInput
+          v-model="form.last_name"
+          type="text"
+          label="Nazwisko (opcjonalne)"
+          name="last_name"
+          placeholder="Kowalski"
+        />
+        <p v-if="error" class="register-form-error">{{ error }}</p>
         <BaseButton type="submit" :disabled="loading" block>
-          {{ loading ? "Logowanie…" : "Zaloguj" }}
+          {{ loading ? "Rejestracja…" : "Zarejestruj się" }}
         </BaseButton>
       </form>
 
-      <p class="login-link">
-        Nie masz konta?
-        <router-link to="/register">Zarejestruj się</router-link>
+      <p class="register-link">
+        Masz już konto?
+        <router-link to="/login">Zaloguj się</router-link>
       </p>
     </div>
   </div>
 </template>
 
 <style scoped>
-.login {
+.register {
   min-height: 100vh;
   display: flex;
   align-items: center;
@@ -99,7 +144,7 @@ async function onSubmit() {
   background: var(--color-bg-alt);
 }
 
-.login-card {
+.register-card {
   width: 100%;
   max-width: 24rem;
   padding: var(--space-8);
@@ -109,45 +154,45 @@ async function onSubmit() {
   box-shadow: var(--shadow-lg);
 }
 
-.login-title {
+.register-title {
   font-size: var(--text-2xl);
   font-weight: var(--font-bold);
   text-align: center;
   margin-bottom: var(--space-2);
 }
 
-.login-subtitle {
+.register-subtitle {
   font-size: var(--text-sm);
   color: var(--color-text-muted);
   text-align: center;
   margin-bottom: var(--space-6);
 }
 
-.login-form {
+.register-form {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
 }
 
-.login-form-error {
+.register-form-error {
   font-size: var(--text-sm);
   color: var(--color-danger);
   margin: 0;
 }
 
-.login-link {
+.register-link {
   font-size: var(--text-sm);
   text-align: center;
   margin-top: var(--space-4);
   color: var(--color-text-muted);
 }
 
-.login-link a {
+.register-link a {
   color: var(--color-primary);
   text-decoration: none;
 }
 
-.login-link a:hover {
+.register-link a:hover {
   text-decoration: underline;
 }
 </style>

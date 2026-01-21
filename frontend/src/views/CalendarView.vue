@@ -110,6 +110,7 @@ function isSlotOccupied(dayOffset: number, hour: number): boolean {
   const slotStart = getSlotStart(dayOffset, hour).getTime()
   const slotEnd = getSlotEnd(dayOffset, hour).getTime()
   return list.some((r) => {
+    if (r.status === "canceled") return false
     const rs = new Date(r.start_at).getTime()
     const re = new Date(r.end_at).getTime()
     return rs < slotEnd && re > slotStart

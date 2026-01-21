@@ -1,7 +1,7 @@
 import { defineStore } from "pinia"
 import { ref, computed } from "vue"
 import { api } from "@/api/client"
-import type { User, LoginRequest } from "@/api/types"
+import type { User, LoginRequest, RegisterRequest } from "@/api/types"
 
 /**
  * Konfiguracja httpOnly cookie (refresh token):
@@ -33,6 +33,21 @@ export const useAuthStore = defineStore("auth", () => {
   async function login(payload: LoginRequest) {
     const { data } = await api.post<{ access: string; refresh: string; user: User }>(
       "/auth/login",
+      payload
+    )
+    access.value = data.access
+    if (!USE_HTTPONLY_REFRESH && data.refresh) {
+      refresh.value = data.refresh
+    } else {
+      refresh.value = null
+    }
+    user.value = data.user
+    return data
+  }
+
+  async function register(payload: RegisterRequest) {
+    const { data } = await api.post<{ access: string; refresh: string; user: User }>(
+      "/auth/register",
       payload
     )
     access.value = data.access
@@ -111,6 +126,7 @@ export const useAuthStore = defineStore("auth", () => {
     roles,
     getAccessToken,
     login,
+    register,
     refreshToken,
     logout,
     fetchMe,

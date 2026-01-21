@@ -11,7 +11,8 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenBlacklistView, TokenRefreshView
 
-from accounts.serializers import LoginSerializer, UserProfileSerializer
+from accounts.models import Role, UserRole
+from accounts.serializers import LoginSerializer, RegisterSerializer, UserProfileSerializer
 
 
 @extend_schema_view(
@@ -131,6 +132,83 @@ class LoginView(APIView):
                 "user": UserProfileSerializer(user).data,
             },
             status=status.HTTP_200_OK,
+        )
+
+
+@extend_schema(tags=["auth"])
+class RegisterView(APIView):
+    permission_classes = [AllowAny]
+
+    @extend_schema(
+        summary="Rejestracja nowego użytkownika",
+        description="Tworzy nowego użytkownika i zwraca tokeny JWT oraz profil. Użytkownik jest aktywny od razu.",
+        request=RegisterSerializer,
+        responses={
+            201: {
+                "type": "object",
+                "properties": {
+                    "access": {"type": "string", "description": "Token JWT (access)"},
+                    "refresh": {"type": "string", "description": "Token do odświeżania"},
+                    "user": {
+                        "type": "object",
+                        "properties": {
+                            "id": {"type": "integer"},
+                            "email": {"type": "string"},
+                            "first_name": {"type": "string"},
+                            "last_name": {"type": "string"},
+                            "roles": {"type": "array", "items": {"type": "string"}},
+                        },
+                    },
+                },
+            },
+            400: {"description": "Błąd walidacji (np. email zajęty, hasła nie pasują)"},
+        },
+        examples=[
+            OpenApiExample(
+                "Request",
+                value={
+                    "email": "newuser@example.com",
+                    "password": "SecurePass123!",
+                    "password_confirm": "SecurePass123!",
+                    "first_name": "Jan",
+                    "last_name": "Kowalski",
+                },
+                request_only=True,
+            ),
+            OpenApiExample(
+                "Response",
+                value={
+                    "access": "eyJ0eXAiOiJKV1QiLCJhbGc...",
+                    "refresh": "eyJ0eXAiOiJKV1QiLCJhbGc...",
+                    "user": {
+                        "id": 2,
+                        "email": "newuser@example.com",
+                        "first_name": "Jan",
+                        "last_name": "Kowalski",
+                        "roles": ["user"],
+                    },
+                },
+                response_only=True,
+            ),
+        ],
+    )
+    def post(self, request):
+        ser = RegisterSerializer(data=request.data)
+        ser.is_valid(raise_exception=True)
+        user = ser.save()
+
+        # Przypisz domyślną rolę "user"
+        user_role, _ = Role.objects.get_or_create(name="user")
+        UserRole.objects.get_or_create(user=user, role=user_role)
+
+        refresh = RefreshToken.for_user(user)
+        return Response(
+            {
+                "access": str(refresh.access_token),
+                "refresh": str(refresh),
+                "user": UserProfileSerializer(user).data,
+            },
+            status=status.HTTP_201_CREATED,
         )
 
 
