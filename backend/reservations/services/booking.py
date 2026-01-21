@@ -39,27 +39,27 @@ def create_reservation(
     )
 
     if start_at >= end_at:
-        raise ReservationValidationError("start_at musi być wcześniej niż end_at")
+        raise ReservationValidationError("Data rozpoczęcia musi być wcześniejsza niż data zakończenia!")
 
     if start_at.date() != end_at.date():
-        raise ReservationValidationError("rezerwacja musi mieścić się w jednym dniu")
+        raise ReservationValidationError("Rezerwacja musi mieścić się w jednym dniu!")
 
     if start_at.tzinfo is None or end_at.tzinfo is None:
-        raise ReservationValidationError("start_at i end_at muszą być timezone-aware")
+        raise ReservationValidationError("Data rozpoczęcia i zakończenia muszą być timezone-aware!")
 
     st = start_at.time()
     et = end_at.time()
     if st < work_start or et > work_end:
         raise ReservationValidationError(
-            f"rezerwacja poza godzinami roboczymi ({work_start}–{work_end})"
+            f"Nie można rezerwowac salki poza godzinami roboczymi ({work_start}–{work_end})"
         )
 
     for r in Reservation.objects.filter(room_id=room_id).exclude(
         status=Reservation.Status.CANCELED
-    ):
+    ).select_related('room'):
         if intervals_overlap(start_at, end_at, r.start_at, r.end_at):
             raise ReservationCollisionError(
-                f"kolizja z rezerwacją id={r.id} w sali room_id={room_id}"
+                f"Salka {r.room.name} jest obecnie zarezerwowana"
             )
 
     now = timezone.now()
@@ -83,7 +83,7 @@ def confirm_reservation(reservation):
     Uprawnienia (owner lub admin) weryfikuje warstwa widoków.
     """
     if reservation.status != Reservation.Status.PENDING:
-        raise ReservationValidationError("Tylko rezerwacje w statusie pending można potwierdzić")
+        raise ReservationValidationError("Można potwierdzać tylko rezerwacje w statusie pending!")
     reservation.status = Reservation.Status.CONFIRMED
     reservation.save(update_fields=["status", "updated_at"])
     send_notifications.delay(reservation.id, "confirmed")

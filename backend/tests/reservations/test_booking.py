@@ -145,7 +145,7 @@ class TestCreateReservation:
         Reservation.objects.create(
             user=user, room=room, status=Reservation.Status.CONFIRMED, start_at=start, end_at=end
         )
-        with pytest.raises(ReservationCollisionError, match="kolizja"):
+        with pytest.raises(ReservationCollisionError, match="jest obecnie zarezerwowana"):
             create_reservation(user, room.id, start, end, work_start=work_start, work_end=work_end)
         mock_expire.apply_async.assert_not_called()
 

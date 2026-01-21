@@ -180,7 +180,7 @@ class TestReservationsCreateAPI:
             format="json",
         )
         assert r.status_code == status.HTTP_409_CONFLICT
-        assert "kolizja" in r.json().get("detail", "").lower()
+        assert "jest obecnie zarezerwowana" in r.json().get("detail", "")
         mock_expire.apply_async.assert_not_called()
 
 
