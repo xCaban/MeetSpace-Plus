@@ -1,12 +1,13 @@
 import { defineStore } from "pinia"
 import { ref, computed } from "vue"
 import { api } from "@/api/client"
-import type { Room, RoomDetail } from "@/api/types"
+import type { Room, RoomDetail, RoomEquipmentInput } from "@/api/types"
 
 export interface RoomCreatePayload {
   name: string
   capacity?: number
   location?: string
+  equipment?: RoomEquipmentInput[]
 }
 
 export interface RoomFilters {

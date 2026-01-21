@@ -25,18 +25,36 @@ export interface TokenRefreshResponse {
   access: string
 }
 
+export interface Equipment {
+  id: number
+  name: string
+  created_at: string
+  updated_at: string
+}
+
+export interface RoomEquipmentItem {
+  id: number
+  name: string
+  qty: number
+}
+
+export interface RoomEquipmentInput {
+  equipment_id: number
+  qty: number
+}
+
 export interface Room {
   id: number
   name: string
   capacity: number
   location: string
-  equipment?: { name: string; qty: number }[]
+  equipment?: RoomEquipmentItem[]
   created_at: string
   updated_at: string
 }
 
 export interface RoomDetail extends Room {
-  equipment: { name: string; qty: number }[]
+  equipment: RoomEquipmentItem[]
 }
 
 export interface ReservationStatus {
