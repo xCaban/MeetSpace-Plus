@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from "vue"
 import { useRoomsStore } from "@/stores/rooms"
 import BaseButton from "@/components/base/BaseButton.vue"
 import BaseInput from "@/components/base/BaseInput.vue"
+import BaseMultiSelect from "@/components/base/BaseMultiSelect.vue"
 import CreateReservationForm from "@/components/CreateReservationForm.vue"
 import DataTable from "@/components/base/DataTable.vue"
 
@@ -11,6 +12,7 @@ const showReservationForm = ref(false)
 
 const filterCap = ref<string | number>("")
 const filterLoc = ref("")
+const filterEquipment = ref<number[]>([])
 
 const columns = [
   { key: "name", label: "Nazwa" },
@@ -27,12 +29,13 @@ function formatEquipment(eq?: { name: string; qty: number }[]) {
 const emptyText = computed(() => {
   const hasFilters =
     (rooms.filters.capacity_min != null && rooms.filters.capacity_min > 0) ||
-    (rooms.filters.location != null && String(rooms.filters.location).trim() !== "")
+    (rooms.filters.location != null && String(rooms.filters.location).trim() !== "") ||
+    (rooms.filters.equipment_ids != null && rooms.filters.equipment_ids.length > 0)
   return hasFilters ? "Brak sal spełniających kryteria" : "Brak sal"
 })
 
-onMounted(() => {
-  rooms.fetchList()
+onMounted(async () => {
+  await Promise.all([rooms.fetchList(), rooms.fetchEquipment()])
 })
 
 function applyFilters() {
@@ -42,6 +45,8 @@ function applyFilters() {
   rooms.setFilters({
     capacity_min: cap === "" || cap === undefined || Number.isNaN(n) || n <= 0 ? undefined : n,
     location: typeof loc === "string" && loc.trim() !== "" ? loc.trim() : undefined,
+    equipment_ids:
+      filterEquipment.value.length > 0 ? filterEquipment.value : undefined,
   })
 }
 
@@ -87,6 +92,13 @@ function onReservationCancel() {
         label="Lokalizacja"
         name="filter_loc"
         placeholder="np. parter"
+      />
+      <BaseMultiSelect
+        v-model="filterEquipment"
+        :options="rooms.equipmentList.map((e) => ({ id: e.id, name: e.name }))"
+        label="Wyposażenie"
+        name="filter_equipment"
+        placeholder="Wybierz sprzęt"
       />
       <div class="filter-actions">
         <BaseButton @click="applyFilters">Filtruj</BaseButton>

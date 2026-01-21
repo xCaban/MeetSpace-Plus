@@ -1,7 +1,7 @@
 import { defineStore } from "pinia"
 import { ref, computed } from "vue"
 import { api } from "@/api/client"
-import type { Room, RoomDetail, RoomEquipmentInput } from "@/api/types"
+import type { Room, RoomDetail, RoomEquipmentInput, Equipment } from "@/api/types"
 
 export interface RoomCreatePayload {
   name: string
@@ -13,10 +13,12 @@ export interface RoomCreatePayload {
 export interface RoomFilters {
   capacity_min?: number
   location?: string
+  equipment_ids?: number[]
 }
 
 export const useRoomsStore = defineStore("rooms", () => {
   const list = ref<Room[]>([])
+  const equipmentList = ref<Equipment[]>([])
   const loading = ref(false)
   const error = ref<string | null>(null)
   const filters = ref<RoomFilters>({})
@@ -27,16 +29,33 @@ export const useRoomsStore = defineStore("rooms", () => {
 
   const filteredList = computed(() => {
     const l = list.value
-    const { capacity_min, location } = filters.value
+    const { capacity_min, location, equipment_ids } = filters.value
     return l.filter((r) => {
       const capOk = capacity_min == null || capacity_min <= 0 || r.capacity >= capacity_min
       const locOk =
         location == null ||
         String(location).trim() === "" ||
         (r.location || "").toLowerCase().includes(String(location).trim().toLowerCase())
-      return capOk && locOk
+      const eqOk =
+        equipment_ids == null ||
+        equipment_ids.length === 0 ||
+        (r.equipment &&
+          equipment_ids.every((eqId) => r.equipment?.some((eq) => eq.id === eqId)))
+      return capOk && locOk && eqOk
     })
   })
+
+  async function fetchEquipment() {
+    try {
+      const { data } = await api.get<Equipment[]>("/equipment/")
+      equipmentList.value = data
+      return data
+    } catch (e: unknown) {
+      const err = e as { message?: string }
+      error.value = err?.message ?? "Błąd ładowania sprzętu"
+      throw e
+    }
+  }
 
   async function fetchList() {
     loading.value = true
@@ -123,6 +142,7 @@ export const useRoomsStore = defineStore("rooms", () => {
 
   return {
     list,
+    equipmentList,
     loading,
     error,
     listCount,
@@ -131,6 +151,7 @@ export const useRoomsStore = defineStore("rooms", () => {
     filteredList,
     isListEmpty,
     hasError,
+    fetchEquipment,
     fetchList,
     fetchOne,
     create,
