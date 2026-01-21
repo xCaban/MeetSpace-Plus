@@ -55,6 +55,7 @@ async function onSubmit() {
 <template>
   <div class="login">
     <div class="login-card">
+      <img src="/logo.png" alt="MeetSpace Plus" class="login-logo" />
       <h1 class="login-title">MeetSpace Plus</h1>
       <p class="login-subtitle">Zaloguj się do systemu rezerwacji sal</p>
 
@@ -107,6 +108,14 @@ async function onSubmit() {
   border-radius: var(--radius-xl);
   border: 1px solid var(--color-border);
   box-shadow: var(--shadow-lg);
+}
+
+.login-logo {
+  display: block;
+  height: 5rem;
+  width: auto;
+  margin: 0 auto var(--space-4);
+  object-fit: contain;
 }
 
 .login-title {

@@ -34,7 +34,10 @@ const nav = computed(() => {
   <div class="layout">
     <header class="header">
       <div class="header-inner container">
-        <RouterLink :to="{ name: 'rooms' }" class="brand">MeetSpace Plus</RouterLink>
+        <RouterLink :to="{ name: 'rooms' }" class="brand">
+          <img src="/logo.png" alt="MeetSpace Plus" class="brand-logo" />
+          <span>MeetSpace Plus</span>
+        </RouterLink>
 
         <button
           type="button"
@@ -97,6 +100,9 @@ const nav = computed(() => {
 }
 
 .brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
   font-size: var(--text-lg);
   font-weight: var(--font-semibold);
   color: var(--color-text);
@@ -105,6 +111,12 @@ const nav = computed(() => {
 .brand:hover {
   text-decoration: none;
   color: var(--color-primary);
+}
+
+.brand-logo {
+  height: 2rem;
+  width: auto;
+  object-fit: contain;
 }
 
 .menu-trigger {
