@@ -8,10 +8,14 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U meetspace"]
+      test: ["CMD-SHELL", "pg_isready -U meetspace -d meetspace"]
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 15
+    networks:
+      meetspace-net:
+        aliases:
+          - db
 
   rabbitmq:
     image: rabbitmq:3-management-alpine
@@ -21,7 +25,11 @@ services:
       test: ["CMD", "rabbitmq-diagnostics", "check_running"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
+    networks:
+      meetspace-net:
+        aliases:
+          - rabbitmq
 
   backend:
     build: .
@@ -33,12 +41,16 @@ services:
       DJANGO_SETTINGS_MODULE: config.settings.dev
       DEBUG: "1"
       SECRET_KEY: dev-secret-key
-    command: python manage.py runserver 0.0.0.0:8000
+      DB_HOST: db
+      DB_PORT: "5432"
+    command: sh wait-for-db.sh python manage.py runserver 0.0.0.0:8000
     depends_on:
       db:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+    networks:
+      - meetspace-net
 
   celery:
     build: .
@@ -47,7 +59,9 @@ services:
       CELERY_BROKER_URL: amqp://guest:guest@rabbitmq:5672//
       DJANGO_SETTINGS_MODULE: config.settings.dev
       SECRET_KEY: dev-secret-key
-    command: celery -A config worker -l info
+      DB_HOST: db
+      DB_PORT: "5432"
+    command: sh wait-for-db.sh celery -A config worker -l info
     depends_on:
       backend:
         condition: service_started
@@ -55,6 +69,8 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+    networks:
+      - meetspace-net
 
   celery-beat:
     build: .
@@ -63,7 +79,9 @@ services:
       CELERY_BROKER_URL: amqp://guest:guest@rabbitmq:5672//
       DJANGO_SETTINGS_MODULE: config.settings.dev
       SECRET_KEY: dev-secret-key
-    command: celery -A config beat -l info
+      DB_HOST: db
+      DB_PORT: "5432"
+    command: sh wait-for-db.sh celery -A config beat -l info
     depends_on:
       backend:
         condition: service_started
@@ -71,6 +89,12 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+    networks:
+      - meetspace-net
+
+networks:
+  meetspace-net:
+    driver: bridge
 
 volumes:
   pgdata:
