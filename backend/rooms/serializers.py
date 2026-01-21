@@ -7,9 +7,23 @@ from rooms.models import Room
 
 
 class RoomListSerializer(serializers.ModelSerializer):
+    equipment = serializers.SerializerMethodField()
+
     class Meta:
         model = Room
-        fields = ("id", "name", "capacity", "location", "created_at", "updated_at")
+        fields = ("id", "name", "capacity", "location", "equipment", "created_at", "updated_at")
+
+    @extend_schema_field(
+        {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {"name": {"type": "string"}, "qty": {"type": "integer"}},
+            },
+        }
+    )
+    def get_equipment(self, obj):
+        return [{"name": re.equipment.name, "qty": re.qty} for re in obj.roomequipment_set.all()]
 
 
 class RoomDetailSerializer(serializers.ModelSerializer):

@@ -41,11 +41,7 @@ function onChange(e: Event) {
       @change="onChange"
     >
       <option v-if="placeholder" value="" disabled>{{ placeholder }}</option>
-      <option
-        v-for="opt in options"
-        :key="String(opt.value)"
-        :value="opt.value"
-      >
+      <option v-for="opt in options" :key="String(opt.value)" :value="opt.value">
         {{ opt.label }}
       </option>
     </select>

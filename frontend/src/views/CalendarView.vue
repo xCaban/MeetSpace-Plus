@@ -193,13 +193,9 @@ onMounted(async () => {
         </button>
       </div>
       <div class="toolbar-group nav">
-        <button type="button" class="nav-btn" aria-label="Poprzedni" @click="prev">
-          ‹
-        </button>
+        <button type="button" class="nav-btn" aria-label="Poprzedni" @click="prev">‹</button>
         <button type="button" class="nav-btn today" @click="today">Today</button>
-        <button type="button" class="nav-btn" aria-label="Następny" @click="next">
-          ›
-        </button>
+        <button type="button" class="nav-btn" aria-label="Następny" @click="next">›</button>
       </div>
     </div>
 
@@ -207,29 +203,15 @@ onMounted(async () => {
       {{ reservations.error }}
     </p>
 
-    <div
-      v-if="selectedRoomId === ''"
-      class="empty-hint"
-      role="status"
-    >
+    <div v-if="selectedRoomId === ''" class="empty-hint" role="status">
       Wybierz salę, aby zobaczyć dostępność.
     </div>
 
-    <div
-      v-else
-      class="calendar-wrap"
-      role="region"
-      aria-label="Siatka dostępności"
-    >
+    <div v-else class="calendar-wrap" role="region" aria-label="Siatka dostępności">
       <table class="cal-table" role="table" aria-label="Dostępność sali wg godziny i dnia">
         <thead>
           <tr>
-            <th
-              v-for="col in columns"
-              :key="col.key"
-              scope="col"
-              class="cal-th"
-            >
+            <th v-for="col in columns" :key="col.key" scope="col" class="cal-th">
               {{ col.label }}
             </th>
           </tr>

@@ -26,21 +26,14 @@ withDefaults(defineProps<Props>(), {
     <table class="table" role="table" :aria-label="ariaLabel">
       <thead>
         <tr>
-          <th
-            v-for="col in columns"
-            :key="col.key"
-            :class="col.class"
-            scope="col"
-          >
+          <th v-for="col in columns" :key="col.key" :class="col.class" scope="col">
             {{ col.label }}
           </th>
         </tr>
       </thead>
       <tbody>
         <tr v-if="loading">
-          <td :colspan="columns.length" class="table-loading">
-            Ładowanie…
-          </td>
+          <td :colspan="columns.length" class="table-loading">Ładowanie…</td>
         </tr>
         <tr v-else-if="data.length === 0">
           <td :colspan="columns.length" class="table-empty">
@@ -48,16 +41,8 @@ withDefaults(defineProps<Props>(), {
           </td>
         </tr>
         <tr v-for="(row, i) in data" :key="i">
-          <td
-            v-for="col in columns"
-            :key="col.key"
-            :class="col.class"
-          >
-            <slot
-              :name="`cell-${col.key}`"
-              :row="row"
-              :value="row[col.key]"
-            >
+          <td v-for="col in columns" :key="col.key" :class="col.class">
+            <slot :name="`cell-${col.key}`" :row="row" :value="row[col.key]">
               {{ row[col.key] }}
             </slot>
           </td>

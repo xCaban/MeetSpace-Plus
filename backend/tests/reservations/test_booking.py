@@ -110,7 +110,7 @@ class TestCreateReservation:
         work_start, work_end = work_hours
         start = _dt(2025, 2, 1, 10, 0)
         end = _dt(2025, 2, 1, 9, 0)
-        with pytest.raises(ReservationValidationError, match="start_at"):
+        with pytest.raises(ReservationValidationError, match="rozpoczęcia"):
             create_reservation(user, room.id, start, end, work_start=work_start, work_end=work_end)
         mock_expire.apply_async.assert_not_called()
 

@@ -41,7 +41,10 @@ withDefaults(defineProps<Props>(), {
   font-weight: var(--font-medium);
   border-radius: var(--radius-md);
   border: 1px solid transparent;
-  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    color 0.15s;
 }
 
 .btn:disabled,

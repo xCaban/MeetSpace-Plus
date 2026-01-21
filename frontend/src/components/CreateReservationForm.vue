@@ -7,10 +7,7 @@ import BaseInput from "@/components/base/BaseInput.vue"
 import BaseSelect from "@/components/base/BaseSelect.vue"
 import type { SelectOption } from "@/components/base/BaseSelect.vue"
 
-const props = withDefaults(
-  defineProps<{ initialRoomId?: number }>(),
-  { initialRoomId: undefined }
-)
+const props = withDefaults(defineProps<{ initialRoomId?: number }>(), { initialRoomId: undefined })
 const emit = defineEmits<{ created: []; cancel: [] }>()
 
 const rooms = useRoomsStore()
@@ -63,7 +60,9 @@ async function onSubmit() {
     const err = e as { message?: string; status?: number }
     formError.value =
       err?.message ??
-      (err?.status === 409 ? "Kolizja: wybrany termin koliduje z inną rezerwacją." : "Błąd tworzenia rezerwacji.")
+      (err?.status === 409
+        ? "Kolizja: wybrany termin koliduje z inną rezerwacją."
+        : "Błąd tworzenia rezerwacji.")
   }
 }
 
@@ -91,26 +90,12 @@ function onCancel() {
       name="room_id"
       placeholder="— Wybierz salę —"
     />
-    <BaseInput
-      v-model="form.start_at"
-      type="datetime-local"
-      label="Od"
-      name="start_at"
-    />
-    <BaseInput
-      v-model="form.end_at"
-      type="datetime-local"
-      label="Do"
-      name="end_at"
-    />
+    <BaseInput v-model="form.start_at" type="datetime-local" label="Od" name="start_at" />
+    <BaseInput v-model="form.end_at" type="datetime-local" label="Do" name="end_at" />
 
     <div class="form-actions">
-      <BaseButton type="submit" :disabled="reservations.loading">
-        Zarezerwuj
-      </BaseButton>
-      <BaseButton type="button" variant="outline" @click="onCancel">
-        Anuluj
-      </BaseButton>
+      <BaseButton type="submit" :disabled="reservations.loading"> Zarezerwuj </BaseButton>
+      <BaseButton type="button" variant="outline" @click="onCancel"> Anuluj </BaseButton>
     </div>
   </form>
 </template>

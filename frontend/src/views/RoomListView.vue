@@ -16,7 +16,13 @@ const columns = [
   { key: "name", label: "Nazwa" },
   { key: "capacity", label: "Pojemność" },
   { key: "location", label: "Lokalizacja" },
+  { key: "equipment", label: "Wyposażenie" },
 ]
+
+function formatEquipment(eq?: { name: string; qty: number }[]) {
+  if (!eq || eq.length === 0) return "—"
+  return eq.map((e) => `${e.name}${e.qty > 1 ? ` (${e.qty})` : ""}`).join(", ")
+}
 
 const emptyText = computed(() => {
   const hasFilters =
@@ -34,16 +40,24 @@ function applyFilters() {
   const loc = filterLoc.value
   const n = Number(cap)
   rooms.setFilters({
-    capacity_min:
-      cap === "" || cap === undefined || Number.isNaN(n) || n <= 0
-        ? undefined
-        : n,
+    capacity_min: cap === "" || cap === undefined || Number.isNaN(n) || n <= 0 ? undefined : n,
     location: typeof loc === "string" && loc.trim() !== "" ? loc.trim() : undefined,
   })
 }
 
-function rowFor(r: { id: number; name: string; capacity: number; location: string }) {
-  return { name: r.name, capacity: r.capacity, location: r.location || "—" }
+function rowFor(r: {
+  id: number
+  name: string
+  capacity: number
+  location: string
+  equipment?: { name: string; qty: number }[]
+}) {
+  return {
+    name: r.name,
+    capacity: r.capacity,
+    location: r.location || "—",
+    equipment: formatEquipment(r.equipment),
+  }
 }
 
 function onReservationCreated() {
@@ -90,17 +104,10 @@ function onReservationCancel() {
     />
 
     <section class="reservation-section">
-      <BaseButton
-        v-if="!showReservationForm"
-        @click="showReservationForm = true"
-      >
+      <BaseButton v-if="!showReservationForm" @click="showReservationForm = true">
         Dodaj rezerwację
       </BaseButton>
-      <CreateReservationForm
-        v-else
-        @created="onReservationCreated"
-        @cancel="onReservationCancel"
-      />
+      <CreateReservationForm v-else @created="onReservationCreated" @cancel="onReservationCancel" />
     </section>
   </div>
 </template>

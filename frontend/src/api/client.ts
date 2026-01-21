@@ -2,7 +2,8 @@ import axios, { type AxiosError } from "axios"
 import type { ApiError } from "./types"
 
 const baseURL =
-  import.meta.env.VITE_API_BASE || (typeof window !== "undefined" ? "" : "http://localhost:8000/api")
+  import.meta.env.VITE_API_BASE ||
+  (typeof window !== "undefined" ? "" : "http://localhost:8000/api")
 
 export const api = axios.create({
   baseURL: baseURL ? `${baseURL.replace(/\/$/, "")}` : "/api",
@@ -61,15 +62,19 @@ declare module "axios" {
   }
 }
 
-function normalizeError(
-  err: AxiosError<ApiError>
-): { message: string; status?: number; data?: ApiError } {
+function normalizeError(err: AxiosError<ApiError>): {
+  message: string
+  status?: number
+  data?: ApiError
+} {
   const status = err.response?.status
   const data = err.response?.data
   let message = err.message
   if (data?.detail && typeof data.detail === "string") message = data.detail
   else if (data && typeof data === "object") {
-    const first = Object.values(data).flat().find((v) => typeof v === "string")
+    const first = Object.values(data)
+      .flat()
+      .find((v) => typeof v === "string")
     if (first) message = first as string
   }
   return { message, status, data }

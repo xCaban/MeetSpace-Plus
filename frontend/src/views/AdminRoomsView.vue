@@ -17,19 +17,32 @@ const columns = [
   { key: "name", label: "Nazwa" },
   { key: "capacity", label: "Pojemność" },
   { key: "location", label: "Lokalizacja" },
+  { key: "equipment", label: "Wyposażenie" },
   { key: "actions", label: "" },
 ]
+
+function formatEquipment(eq?: { name: string; qty: number }[]) {
+  if (!eq || eq.length === 0) return "—"
+  return eq.map((e) => `${e.name}${e.qty > 1 ? ` (${e.qty})` : ""}`).join(", ")
+}
 
 onMounted(() => {
   rooms.fetchList()
 })
 
-function rowFor(r: { id: number; name: string; capacity: number; location: string }) {
+function rowFor(r: {
+  id: number
+  name: string
+  capacity: number
+  location: string
+  equipment?: { name: string; qty: number }[]
+}) {
   return {
     id: r.id,
     name: r.name,
     capacity: r.capacity,
     location: r.location || "—",
+    equipment: formatEquipment(r.equipment),
     actions: "x",
   }
 }
@@ -97,11 +110,7 @@ async function onDelete(id: number) {
       <BaseButton v-if="!showForm" @click="showForm = true">Dodaj salę</BaseButton>
     </div>
 
-    <form
-      v-if="showForm"
-      class="form-inline"
-      @submit.prevent="onSubmit"
-    >
+    <form v-if="showForm" class="form-inline" @submit.prevent="onSubmit">
       <BaseInput v-model="form.name" label="Nazwa" name="name" />
       <BaseInput v-model="form.capacity" type="number" label="Pojemność" name="capacity" />
       <BaseInput v-model="form.location" label="Lokalizacja" name="location" />
@@ -142,10 +151,17 @@ async function onDelete(id: number) {
         <h2 id="edit-dialog-title" class="modal-title">Edycja sali</h2>
         <form @submit.prevent="onEditSubmit">
           <BaseInput v-model="editForm.name" label="Nazwa" name="edit_name" />
-          <BaseInput v-model="editForm.capacity" type="number" label="Pojemność" name="edit_capacity" />
+          <BaseInput
+            v-model="editForm.capacity"
+            type="number"
+            label="Pojemność"
+            name="edit_capacity"
+          />
           <BaseInput v-model="editForm.location" label="Lokalizacja" name="edit_location" />
           <div class="form-actions">
-            <BaseButton type="submit" :disabled="rooms.loading || !editForm.name">Zapisz</BaseButton>
+            <BaseButton type="submit" :disabled="rooms.loading || !editForm.name"
+              >Zapisz</BaseButton
+            >
             <BaseButton type="button" variant="outline" @click="closeEdit">Anuluj</BaseButton>
           </div>
         </form>

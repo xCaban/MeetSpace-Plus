@@ -28,14 +28,11 @@ export const useRoomsStore = defineStore("rooms", () => {
     const l = list.value
     const { capacity_min, location } = filters.value
     return l.filter((r) => {
-      const capOk =
-        capacity_min == null || capacity_min <= 0 || r.capacity >= capacity_min
+      const capOk = capacity_min == null || capacity_min <= 0 || r.capacity >= capacity_min
       const locOk =
         location == null ||
         String(location).trim() === "" ||
-        (r.location || "")
-          .toLowerCase()
-          .includes(String(location).trim().toLowerCase())
+        (r.location || "").toLowerCase().includes(String(location).trim().toLowerCase())
       return capOk && locOk
     })
   })

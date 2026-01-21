@@ -30,6 +30,7 @@ export interface Room {
   name: string
   capacity: number
   location: string
+  equipment?: { name: string; qty: number }[]
   created_at: string
   updated_at: string
 }

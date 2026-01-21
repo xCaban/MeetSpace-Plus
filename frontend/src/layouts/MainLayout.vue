@@ -124,7 +124,9 @@ const nav = computed(() => {
   width: 1.25rem;
   height: 2px;
   background: var(--color-text);
-  box-shadow: 0 6px 0 var(--color-text), 0 -6px 0 var(--color-text);
+  box-shadow:
+    0 6px 0 var(--color-text),
+    0 -6px 0 var(--color-text);
 }
 
 .nav {
