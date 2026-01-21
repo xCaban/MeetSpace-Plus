@@ -281,14 +281,6 @@ Proponowana **Conventional Commits**:
 
 Opcjonalnie scope w nawiasie: `feat(rooms): capacity i location`.
 
-### Wskazówki, jak dojść do ≥40 commitów
-
-- Jedna logicznie spójna zmiana na commit („jeden PR” w małej skali).
-- Dziel duże feature na mniejsze: np. model → migracja → serwis → widok → serializer → testy.
-- Osobne commity: `docs: README`, `docs: ERD`, `chore: docker-compose`, `chore: pre-commit`, `feat(auth): JWT`, `feat(rooms): CRUD`, `feat(reservations): create + kolizje`, `feat(reservations): confirm/cancel`, `test(booking): kolizje`, `feat(tasks): expire_hold`, `feat(tasks): send_notifications`, `feat(tasks): reconcile_pending`, `feat(api): Swagger`, `feat(frontend): login`, `feat(frontend): lista sal`, `feat(frontend): formularz rezerwacji`, `fix(ui): loading/error`, itd.
-- Migracje i seed: `chore(migrations): initial`, `chore(seed): rooms, equipment, userzy`, `chore(seed): rezerwacje`.
-- Każdy większy moduł (accounts, rooms, reservations, frontend) daje kilka–kilkanaście commitów. Testy i poprawki – osobne `test:` / `fix:`.
-
 ---
 
 ## Licencja
