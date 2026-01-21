@@ -1,0 +1,37 @@
+# Dependencies
+frontend/node_modules/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.venv/
+venv/
+env/
+.eggs/
+*.egg-info/
+*.egg
+
+# Django / backend
+*.sqlite3
+*.log
+staticfiles/
+media/
+.env
+.env.local
+
+# IDE / editor
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Build / cache
+frontend/dist/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Opcjonalnie (odkomentuj, jeśli nie chcesz trackować):
+CLAUDE.md

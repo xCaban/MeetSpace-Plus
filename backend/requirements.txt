@@ -8,3 +8,4 @@ dj-database-url>=2.2,<3
 gunicorn>=22,<23
 pytest>=8,<9
 pytest-django>=4.9,<5
+django-cors-headers>=4.3.0
