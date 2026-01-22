@@ -3,6 +3,7 @@ import { ref, computed, watch, onMounted } from "vue"
 import { useRoomsStore } from "@/stores/rooms"
 import { useReservationsStore } from "@/stores/reservations"
 import BaseSelect from "@/components/base/BaseSelect.vue"
+import { formatDateShort } from "@/utils/date"
 import type { Reservation } from "@/api/types"
 import type { SelectOption } from "@/components/base/BaseSelect.vue"
 
@@ -51,7 +52,7 @@ const range = computed(() => {
 const columns = computed(() => {
   if (viewMode.value === "day") {
     const d = selectedDate.value
-    return [{ key: "hour", label: formatDate(d) }]
+    return [{ key: "hour", label: formatDateShort(d) }]
   }
   const mon = new Date(selectedDate.value)
   const day = mon.getDay()
@@ -72,14 +73,6 @@ const hours = computed(() => {
   for (let i = HOUR_START; i <= HOUR_END; i++) h.push(i)
   return h
 })
-
-function formatDate(d: Date): string {
-  return d.toLocaleDateString("pl-PL", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-  })
-}
 
 function formatHour(h: number): string {
   return `${String(h).padStart(2, "0")}:00`

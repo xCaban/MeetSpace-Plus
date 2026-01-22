@@ -4,6 +4,7 @@ import { useReservationsStore } from "@/stores/reservations"
 import Badge from "@/components/base/Badge.vue"
 import BaseButton from "@/components/base/BaseButton.vue"
 import DataTable from "@/components/base/DataTable.vue"
+import { formatDateTime } from "@/utils/date"
 import type { Reservation } from "@/api/types"
 
 const res = useReservationsStore()
@@ -23,6 +24,8 @@ const columns = [
 function rowFor(r: Reservation) {
   return {
     ...r,
+    start_at: formatDateTime(r.start_at),
+    end_at: formatDateTime(r.end_at),
     actions: "actions",
   }
 }

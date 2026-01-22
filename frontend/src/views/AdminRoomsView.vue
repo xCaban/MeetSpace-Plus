@@ -8,6 +8,7 @@ import BaseInput from "@/components/base/BaseInput.vue"
 import DataTable from "@/components/base/DataTable.vue"
 import Badge from "@/components/base/Badge.vue"
 import EquipmentSelector from "@/components/EquipmentSelector.vue"
+import { formatDateTime } from "@/utils/date"
 import type { Room, RoomEquipmentInput, AdminUser } from "@/api/types"
 
 const rooms = useRoomsStore()
@@ -105,18 +106,13 @@ function equipmentRowFor(e: { id: number; name: string }) {
   }
 }
 
-function formatDate(d: string | null) {
-  if (!d) return "—"
-  return new Date(d).toLocaleString("pl-PL")
-}
-
 function userRowFor(u: AdminUser) {
   return {
     id: u.id,
     email: u.email,
     name: `${u.first_name} ${u.last_name}`.trim() || "—",
     is_admin: u.is_admin,
-    last_login: formatDate(u.last_login),
+    last_login: formatDateTime(u.last_login),
     actions: "x",
   }
 }
@@ -446,7 +442,11 @@ async function onPasswordResetSubmit() {
       >
         <template #cell-actions="{ row }">
           <div class="cell-actions">
-            <BaseButton variant="outline" size="sm" @click="openEquipmentEditById(row.id as number)">
+            <BaseButton
+              variant="outline"
+              size="sm"
+              @click="openEquipmentEditById(row.id as number)"
+            >
               Edytuj
             </BaseButton>
             <BaseButton variant="danger" size="sm" @click="onEquipmentDelete(row.id as number)"
@@ -513,7 +513,12 @@ async function onPasswordResetSubmit() {
             >Zapisz</BaseButton
           >
           <BaseButton
-            type="button" variant="outline" @click="showUserForm = false; resetUserForm()"
+            type="button"
+            variant="outline"
+            @click="
+              showUserForm = false
+              resetUserForm()
+            "
             >Anuluj</BaseButton
           >
         </div>
