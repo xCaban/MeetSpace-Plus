@@ -16,6 +16,7 @@ const selectedRoomId = ref<number | "">("")
 
 const HOUR_START = 8
 const HOUR_END = 21
+const SLOT_MINUTES = 30
 
 const roomOptions = computed<SelectOption[]>(() =>
   rooms.list.map((r) => ({ value: r.id, label: r.name }))
@@ -68,40 +69,44 @@ const columns = computed(() => {
   return out
 })
 
-const hours = computed(() => {
-  const h: number[] = []
-  for (let i = HOUR_START; i <= HOUR_END; i++) h.push(i)
-  return h
+const slots = computed(() => {
+  const result: { hour: number; minute: number }[] = []
+  for (let h = HOUR_START; h < HOUR_END; h++) {
+    for (let m = 0; m < 60; m += SLOT_MINUTES) {
+      result.push({ hour: h, minute: m })
+    }
+  }
+  return result
 })
 
-function formatHour(h: number): string {
-  return `${String(h).padStart(2, "0")}:00`
+function formatSlot(slot: { hour: number; minute: number }): string {
+  return `${String(slot.hour).padStart(2, "0")}:${String(slot.minute).padStart(2, "0")}`
 }
 
-function getSlotStart(dayOffset: number, hour: number): Date {
+function getSlotStart(dayOffset: number, hour: number, minute: number): Date {
   const d = new Date(selectedDate.value)
   if (viewMode.value === "day") {
-    d.setHours(hour, 0, 0, 0)
+    d.setHours(hour, minute, 0, 0)
     return d
   }
   const day = d.getDay()
   const diff = day === 0 ? -6 : 1 - day
   d.setDate(d.getDate() + diff + dayOffset)
-  d.setHours(hour, 0, 0, 0)
+  d.setHours(hour, minute, 0, 0)
   return d
 }
 
-function getSlotEnd(dayOffset: number, hour: number): Date {
-  const s = getSlotStart(dayOffset, hour)
+function getSlotEnd(dayOffset: number, hour: number, minute: number): Date {
+  const s = getSlotStart(dayOffset, hour, minute)
   const e = new Date(s)
-  e.setHours(e.getHours() + 1, 0, 0, 0)
+  e.setMinutes(e.getMinutes() + SLOT_MINUTES)
   return e
 }
 
-function isSlotOccupied(dayOffset: number, hour: number): boolean {
+function isSlotOccupied(dayOffset: number, hour: number, minute: number): boolean {
   const list = reservations.list as Reservation[]
-  const slotStart = getSlotStart(dayOffset, hour).getTime()
-  const slotEnd = getSlotEnd(dayOffset, hour).getTime()
+  const slotStart = getSlotStart(dayOffset, hour, minute).getTime()
+  const slotEnd = getSlotEnd(dayOffset, hour, minute).getTime()
   return list.some((r) => {
     if (r.status === "canceled") return false
     const rs = new Date(r.start_at).getTime()
@@ -215,15 +220,15 @@ onMounted(async () => {
             <td :colspan="columns.length" class="cal-loading">Ładowanie…</td>
           </tr>
           <template v-else>
-            <tr v-for="h in hours" :key="h">
-              <th scope="row" class="cal-hour">{{ formatHour(h) }}</th>
+            <tr v-for="(slot, idx) in slots" :key="idx">
+              <th scope="row" class="cal-hour">{{ formatSlot(slot) }}</th>
               <td
                 v-for="d in dayCount"
                 :key="d - 1"
                 class="cal-cell"
-                :class="{ 'cal-cell--busy': isSlotOccupied(d - 1, h) }"
+                :class="{ 'cal-cell--busy': isSlotOccupied(d - 1, slot.hour, slot.minute) }"
               >
-                {{ isSlotOccupied(d - 1, h) ? "zajęte" : "wolne" }}
+                {{ isSlotOccupied(d - 1, slot.hour, slot.minute) ? "zajęte" : "wolne" }}
               </td>
             </tr>
           </template>
