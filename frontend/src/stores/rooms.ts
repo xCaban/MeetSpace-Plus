@@ -39,8 +39,7 @@ export const useRoomsStore = defineStore("rooms", () => {
       const eqOk =
         equipment_ids == null ||
         equipment_ids.length === 0 ||
-        (r.equipment &&
-          equipment_ids.every((eqId) => r.equipment?.some((eq) => eq.id === eqId)))
+        (r.equipment && equipment_ids.every((eqId) => r.equipment?.some((eq) => eq.id === eqId)))
       return capOk && locOk && eqOk
     })
   })

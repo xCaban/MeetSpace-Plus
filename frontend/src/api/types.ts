@@ -97,3 +97,31 @@ export interface ApiError {
   detail?: string
   [key: string]: string | string[] | undefined
 }
+
+// --- Admin User Management ---
+
+export interface AdminUser {
+  id: number
+  email: string
+  first_name: string
+  last_name: string
+  is_admin: boolean
+  last_login: string | null
+  created_at: string
+  updated_at?: string
+}
+
+export interface AdminUserCreate {
+  email: string
+  password: string
+  first_name?: string
+  last_name?: string
+  is_admin?: boolean
+}
+
+export interface AdminUserUpdate {
+  email?: string
+  first_name?: string
+  last_name?: string
+  is_admin?: boolean
+}

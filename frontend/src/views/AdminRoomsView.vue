@@ -2,16 +2,19 @@
 import { ref, reactive, onMounted } from "vue"
 import { useRoomsStore } from "@/stores/rooms"
 import { useEquipmentStore } from "@/stores/equipment"
+import { useUsersStore } from "@/stores/users"
 import BaseButton from "@/components/base/BaseButton.vue"
 import BaseInput from "@/components/base/BaseInput.vue"
 import DataTable from "@/components/base/DataTable.vue"
+import Badge from "@/components/base/Badge.vue"
 import EquipmentSelector from "@/components/EquipmentSelector.vue"
-import type { Room, RoomEquipmentInput } from "@/api/types"
+import type { Room, RoomEquipmentInput, AdminUser } from "@/api/types"
 
 const rooms = useRoomsStore()
 const equipment = useEquipmentStore()
+const users = useUsersStore()
 
-const activeTab = ref<"rooms" | "equipment">("rooms")
+const activeTab = ref<"rooms" | "equipment" | "users">("rooms")
 
 // Room form state
 const showRoomForm = ref(false)
@@ -29,6 +32,28 @@ const equipmentForm = reactive({ name: "" })
 const editingEquipmentId = ref<number | null>(null)
 const editEquipmentForm = reactive({ name: "" })
 
+// User form state
+const showUserForm = ref(false)
+const userForm = reactive({
+  email: "",
+  password: "",
+  first_name: "",
+  last_name: "",
+  is_admin: false,
+})
+
+const editingUserId = ref<number | null>(null)
+const editUserForm = reactive({
+  email: "",
+  first_name: "",
+  last_name: "",
+  is_admin: false,
+})
+
+// Password reset modal
+const resetPasswordUserId = ref<number | null>(null)
+const newPassword = ref("")
+
 const roomColumns = [
   { key: "name", label: "Nazwa" },
   { key: "capacity", label: "Pojemność" },
@@ -42,6 +67,14 @@ const equipmentColumns = [
   { key: "actions", label: "" },
 ]
 
+const userColumns = [
+  { key: "email", label: "Email" },
+  { key: "name", label: "Imię i nazwisko" },
+  { key: "is_admin", label: "Rola" },
+  { key: "last_login", label: "Ostatnie logowanie" },
+  { key: "actions", label: "" },
+]
+
 function formatEquipment(eq?: { name: string; qty: number }[]) {
   if (!eq || eq.length === 0) return "—"
   return eq.map((e) => `${e.name}${e.qty > 1 ? ` (${e.qty})` : ""}`).join(", ")
@@ -50,6 +83,7 @@ function formatEquipment(eq?: { name: string; qty: number }[]) {
 onMounted(() => {
   rooms.fetchList()
   equipment.fetchList()
+  users.fetchList()
 })
 
 function roomRowFor(r: Room) {
@@ -67,6 +101,22 @@ function equipmentRowFor(e: { id: number; name: string }) {
   return {
     id: e.id,
     name: e.name,
+    actions: "x",
+  }
+}
+
+function formatDate(d: string | null) {
+  if (!d) return "—"
+  return new Date(d).toLocaleString("pl-PL")
+}
+
+function userRowFor(u: AdminUser) {
+  return {
+    id: u.id,
+    email: u.email,
+    name: `${u.first_name} ${u.last_name}`.trim() || "—",
+    is_admin: u.is_admin,
+    last_login: formatDate(u.last_login),
     actions: "x",
   }
 }
@@ -177,6 +227,93 @@ async function onEquipmentDelete(id: number) {
     alert(equipment.error || "Nie można usunąć sprzętu")
   }
 }
+
+// User actions
+function resetUserForm() {
+  userForm.email = ""
+  userForm.password = ""
+  userForm.first_name = ""
+  userForm.last_name = ""
+  userForm.is_admin = false
+}
+
+function openUserEdit(u: AdminUser) {
+  editingUserId.value = u.id
+  editUserForm.email = u.email
+  editUserForm.first_name = u.first_name
+  editUserForm.last_name = u.last_name
+  editUserForm.is_admin = u.is_admin
+}
+
+function openUserEditById(id: number) {
+  const u = users.list.find((x) => x.id === id)
+  if (u) openUserEdit(u)
+}
+
+function closeUserEdit() {
+  editingUserId.value = null
+}
+
+async function onUserSubmit() {
+  try {
+    await users.create({
+      email: userForm.email,
+      password: userForm.password,
+      first_name: userForm.first_name,
+      last_name: userForm.last_name,
+      is_admin: userForm.is_admin,
+    })
+    resetUserForm()
+    showUserForm.value = false
+  } catch {
+    /* error in store */
+  }
+}
+
+async function onUserEditSubmit() {
+  if (editingUserId.value == null) return
+  try {
+    await users.update(editingUserId.value, {
+      email: editUserForm.email,
+      first_name: editUserForm.first_name,
+      last_name: editUserForm.last_name,
+      is_admin: editUserForm.is_admin,
+    })
+    closeUserEdit()
+  } catch {
+    /* error in store */
+  }
+}
+
+async function onUserDelete(id: number) {
+  if (!confirm("Usunąć użytkownika?")) return
+  try {
+    await users.remove(id)
+  } catch {
+    alert(users.error || "Nie można usunąć użytkownika")
+  }
+}
+
+function openPasswordReset(id: number) {
+  resetPasswordUserId.value = id
+  newPassword.value = ""
+}
+
+function closePasswordReset() {
+  resetPasswordUserId.value = null
+  newPassword.value = ""
+}
+
+async function onPasswordResetSubmit() {
+  if (resetPasswordUserId.value == null || !newPassword.value) return
+  try {
+    await users.resetPassword(resetPasswordUserId.value, newPassword.value)
+    closePasswordReset()
+    alert("Hasło zostało zmienione")
+  } catch {
+    alert(users.error || "Błąd resetowania hasła")
+  }
+}
 </script>
 
 <template>
@@ -194,6 +331,9 @@ async function onEquipmentDelete(id: number) {
         @click="activeTab = 'equipment'"
       >
         Sprzęt
+      </button>
+      <button :class="['tab', { active: activeTab === 'users' }]" @click="activeTab = 'users'">
+        Użytkownicy
       </button>
     </div>
 
@@ -230,10 +370,12 @@ async function onEquipmentDelete(id: number) {
       >
         <template #cell-actions="{ row }">
           <div class="cell-actions">
-            <BaseButton variant="outline" size="sm" @click="openRoomEditById(row.id)">
+            <BaseButton variant="outline" size="sm" @click="openRoomEditById(row.id as number)">
               Edytuj
             </BaseButton>
-            <BaseButton variant="danger" size="sm" @click="onRoomDelete(row.id)">Usuń</BaseButton>
+            <BaseButton variant="danger" size="sm" @click="onRoomDelete(row.id as number)"
+              >Usuń</BaseButton
+            >
           </div>
         </template>
       </DataTable>
@@ -304,10 +446,10 @@ async function onEquipmentDelete(id: number) {
       >
         <template #cell-actions="{ row }">
           <div class="cell-actions">
-            <BaseButton variant="outline" size="sm" @click="openEquipmentEditById(row.id)">
+            <BaseButton variant="outline" size="sm" @click="openEquipmentEditById(row.id as number)">
               Edytuj
             </BaseButton>
-            <BaseButton variant="danger" size="sm" @click="onEquipmentDelete(row.id)"
+            <BaseButton variant="danger" size="sm" @click="onEquipmentDelete(row.id as number)"
               >Usuń</BaseButton
             >
           </div>
@@ -332,6 +474,134 @@ async function onEquipmentDelete(id: number) {
                 >Zapisz</BaseButton
               >
               <BaseButton type="button" variant="outline" @click="closeEquipmentEdit"
+                >Anuluj</BaseButton
+              >
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Użytkownicy -->
+    <div v-if="activeTab === 'users'" class="tab-content">
+      <div class="section-head">
+        <BaseInput
+          v-model="users.searchQuery"
+          label=""
+          name="search"
+          placeholder="Szukaj (email, imię, nazwisko)..."
+          class="search-input"
+        />
+        <BaseButton v-if="!showUserForm" @click="showUserForm = true">Dodaj użytkownika</BaseButton>
+      </div>
+
+      <form v-if="showUserForm" class="form-card" @submit.prevent="onUserSubmit">
+        <BaseInput v-model="userForm.email" label="Email" name="email" type="email" />
+        <BaseInput v-model="userForm.password" label="Hasło" name="password" type="password" />
+        <BaseInput v-model="userForm.first_name" label="Imię" name="first_name" />
+        <BaseInput v-model="userForm.last_name" label="Nazwisko" name="last_name" />
+        <div class="form-section">
+          <label class="form-checkbox">
+            <input v-model="userForm.is_admin" type="checkbox" />
+            <span>Administrator</span>
+          </label>
+        </div>
+        <div class="form-actions">
+          <BaseButton
+            type="submit"
+            :disabled="users.loading || !userForm.email || !userForm.password"
+            >Zapisz</BaseButton
+          >
+          <BaseButton
+            type="button" variant="outline" @click="showUserForm = false; resetUserForm()"
+            >Anuluj</BaseButton
+          >
+        </div>
+      </form>
+
+      <p v-if="users.error" class="page-error" role="alert">{{ users.error }}</p>
+
+      <DataTable
+        :columns="userColumns"
+        :data="users.filteredList.map(userRowFor)"
+        :loading="users.loading"
+        empty-text="Brak użytkowników"
+        aria-label="Lista użytkowników (CRUD)"
+      >
+        <template #cell-is_admin="{ row }">
+          <Badge :variant="row.is_admin ? 'info' : 'default'">
+            {{ row.is_admin ? "Admin" : "Użytkownik" }}
+          </Badge>
+        </template>
+        <template #cell-actions="{ row }">
+          <div class="cell-actions">
+            <BaseButton variant="outline" size="sm" @click="openUserEditById(row.id as number)">
+              Edytuj
+            </BaseButton>
+            <BaseButton variant="outline" size="sm" @click="openPasswordReset(row.id as number)">
+              Reset hasła
+            </BaseButton>
+            <BaseButton variant="danger" size="sm" @click="onUserDelete(row.id as number)"
+              >Usuń</BaseButton
+            >
+          </div>
+        </template>
+      </DataTable>
+
+      <!-- User edit modal -->
+      <div
+        v-if="editingUserId != null"
+        class="modal-overlay"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="edit-user-dialog-title"
+        @click.self="closeUserEdit"
+      >
+        <div class="modal-card">
+          <h2 id="edit-user-dialog-title" class="modal-title">Edycja użytkownika</h2>
+          <form @submit.prevent="onUserEditSubmit">
+            <BaseInput v-model="editUserForm.email" label="Email" name="edit_email" type="email" />
+            <BaseInput v-model="editUserForm.first_name" label="Imię" name="edit_first_name" />
+            <BaseInput v-model="editUserForm.last_name" label="Nazwisko" name="edit_last_name" />
+            <div class="form-section">
+              <label class="form-checkbox">
+                <input v-model="editUserForm.is_admin" type="checkbox" />
+                <span>Administrator</span>
+              </label>
+            </div>
+            <div class="form-actions">
+              <BaseButton type="submit" :disabled="users.loading || !editUserForm.email"
+                >Zapisz</BaseButton
+              >
+              <BaseButton type="button" variant="outline" @click="closeUserEdit">Anuluj</BaseButton>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Password reset modal -->
+      <div
+        v-if="resetPasswordUserId != null"
+        class="modal-overlay"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="reset-password-dialog-title"
+        @click.self="closePasswordReset"
+      >
+        <div class="modal-card">
+          <h2 id="reset-password-dialog-title" class="modal-title">Reset hasła</h2>
+          <form @submit.prevent="onPasswordResetSubmit">
+            <BaseInput
+              v-model="newPassword"
+              label="Nowe hasło"
+              name="new_password"
+              type="password"
+            />
+            <div class="form-actions">
+              <BaseButton type="submit" :disabled="users.loading || !newPassword"
+                >Zapisz</BaseButton
+              >
+              <BaseButton type="button" variant="outline" @click="closePasswordReset"
                 >Anuluj</BaseButton
               >
             </div>
@@ -405,6 +675,13 @@ async function onEquipmentDelete(id: number) {
 .section-head {
   display: flex;
   justify-content: flex-end;
+  align-items: flex-end;
+  gap: var(--space-4);
+}
+
+.search-input {
+  flex: 1;
+  max-width: 20rem;
 }
 
 .form-card {
@@ -427,6 +704,21 @@ async function onEquipmentDelete(id: number) {
   font-size: var(--text-sm);
   font-weight: var(--font-medium);
   color: var(--color-text);
+}
+
+.form-checkbox {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+  font-size: var(--text-sm);
+  color: var(--color-text);
+}
+
+.form-checkbox input {
+  width: 1rem;
+  height: 1rem;
+  cursor: pointer;
 }
 
 .form-actions {

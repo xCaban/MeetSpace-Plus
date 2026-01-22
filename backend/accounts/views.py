@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from drf_spectacular.utils import (
     OpenApiExample,
     extend_schema,
@@ -5,14 +6,29 @@ from drf_spectacular.utils import (
     inline_serializer,
 )
 from rest_framework import serializers, status
+from rest_framework.decorators import action
+from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.viewsets import ModelViewSet
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenBlacklistView, TokenRefreshView
 
 from accounts.models import Role, UserRole
-from accounts.serializers import LoginSerializer, RegisterSerializer, UserProfileSerializer
+from accounts.permissions import IsAdmin
+from accounts.serializers import (
+    AdminPasswordResetSerializer,
+    LoginSerializer,
+    RegisterSerializer,
+    UserCreateSerializer,
+    UserDetailSerializer,
+    UserListSerializer,
+    UserProfileSerializer,
+    UserUpdateSerializer,
+)
+
+User = get_user_model()
 
 
 @extend_schema_view(
@@ -239,3 +255,123 @@ class MeView(APIView):
     )
     def get(self, request):
         return Response(UserProfileSerializer(request.user).data)
+
+
+# --- Admin User Management ---
+
+
+@extend_schema_view(
+    list=extend_schema(
+        tags=["admin-users"],
+        summary="Lista użytkowników (admin)",
+        description="Zwraca listę wszystkich użytkowników. Wymaga roli admin.",
+        responses={200: UserListSerializer(many=True)},
+    ),
+    retrieve=extend_schema(
+        tags=["admin-users"],
+        summary="Szczegóły użytkownika (admin)",
+        responses={200: UserDetailSerializer, 404: {"description": "Nie znaleziono użytkownika"}},
+    ),
+    create=extend_schema(
+        tags=["admin-users"],
+        summary="Utwórz użytkownika (admin)",
+        request=UserCreateSerializer,
+        responses={
+            201: UserDetailSerializer,
+            400: {"description": "Błąd walidacji"},
+            401: {"description": "Brak uwierzytelnienia"},
+            403: {"description": "Brak uprawnień (wymagana rola admin)"},
+        },
+    ),
+    partial_update=extend_schema(
+        tags=["admin-users"],
+        summary="Aktualizuj użytkownika (admin)",
+        request=UserUpdateSerializer,
+        responses={
+            200: UserDetailSerializer,
+            400: {"description": "Błąd walidacji"},
+            401: {"description": "Brak uwierzytelnienia"},
+            403: {"description": "Brak uprawnień"},
+            404: {"description": "Nie znaleziono użytkownika"},
+        },
+    ),
+    destroy=extend_schema(
+        tags=["admin-users"],
+        summary="Usuń użytkownika (admin)",
+        responses={
+            204: {"description": "Usunięto"},
+            400: {"description": "Nie można usunąć samego siebie"},
+            401: {"description": "Brak uwierzytelnienia"},
+            403: {"description": "Brak uprawnień"},
+            404: {"description": "Nie znaleziono użytkownika"},
+        },
+    ),
+)
+class UserViewSet(ModelViewSet):
+    """ViewSet do zarządzania użytkownikami (admin-only)."""
+
+    queryset = User.objects.all().order_by("-created_at")
+    permission_classes = [IsAdmin]
+    filter_backends = [SearchFilter, OrderingFilter]
+    search_fields = ["email", "first_name", "last_name"]
+    ordering_fields = ["email", "created_at", "last_login"]
+
+    def get_serializer_class(self):
+        if self.action == "list":
+            return UserListSerializer
+        if self.action == "retrieve":
+            return UserDetailSerializer
+        if self.action == "create":
+            return UserCreateSerializer
+        if self.action in ("partial_update", "update"):
+            return UserUpdateSerializer
+        if self.action == "reset_password":
+            return AdminPasswordResetSerializer
+        return UserDetailSerializer
+
+    def create(self, request, *args, **kwargs):
+        ser = self.get_serializer(data=request.data)
+        ser.is_valid(raise_exception=True)
+        user = ser.save()
+        return Response(UserDetailSerializer(user).data, status=status.HTTP_201_CREATED)
+
+    def partial_update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        ser = self.get_serializer(instance, data=request.data, partial=True)
+        ser.is_valid(raise_exception=True)
+        user = ser.update(instance, ser.validated_data)
+        return Response(UserDetailSerializer(user).data)
+
+    def update(self, request, *args, **kwargs):
+        return self.partial_update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        # Nie pozwól adminowi usunąć samego siebie
+        if instance.id == request.user.id:
+            return Response(
+                {"detail": "Nie można usunąć własnego konta."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        instance.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @extend_schema(
+        tags=["admin-users"],
+        summary="Resetuj hasło użytkownika (admin)",
+        request=AdminPasswordResetSerializer,
+        responses={
+            200: {"description": "Hasło zmienione"},
+            400: {"description": "Błąd walidacji hasła"},
+            401: {"description": "Brak uwierzytelnienia"},
+            403: {"description": "Brak uprawnień"},
+            404: {"description": "Nie znaleziono użytkownika"},
+        },
+    )
+    @action(detail=True, methods=["post"], url_path="reset-password")
+    def reset_password(self, request, pk=None):
+        user = self.get_object()
+        ser = AdminPasswordResetSerializer(data=request.data)
+        ser.is_valid(raise_exception=True)
+        ser.update(user, ser.validated_data)
+        return Response({"detail": "Hasło zostało zmienione."})

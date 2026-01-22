@@ -98,11 +98,7 @@ onUnmounted(() => {
           class="multiselect-option"
           :class="{ 'multiselect-option--selected': isSelected(opt.id) }"
         >
-          <input
-            type="checkbox"
-            :checked="isSelected(opt.id)"
-            @change="toggleOption(opt.id)"
-          />
+          <input type="checkbox" :checked="isSelected(opt.id)" @change="toggleOption(opt.id)" />
           <span>{{ opt.name }}</span>
         </label>
       </div>

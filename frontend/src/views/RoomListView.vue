@@ -45,8 +45,7 @@ function applyFilters() {
   rooms.setFilters({
     capacity_min: cap === "" || cap === undefined || Number.isNaN(n) || n <= 0 ? undefined : n,
     location: typeof loc === "string" && loc.trim() !== "" ? loc.trim() : undefined,
-    equipment_ids:
-      filterEquipment.value.length > 0 ? filterEquipment.value : undefined,
+    equipment_ids: filterEquipment.value.length > 0 ? filterEquipment.value : undefined,
   })
 }
 
