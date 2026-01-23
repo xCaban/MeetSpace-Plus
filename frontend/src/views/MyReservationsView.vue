@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted } from "vue"
+import { onMounted, ref } from "vue"
 import { useReservationsStore } from "@/stores/reservations"
 import Badge from "@/components/base/Badge.vue"
 import BaseButton from "@/components/base/BaseButton.vue"
@@ -45,12 +45,24 @@ async function onConfirm(id: number) {
   }
 }
 
-async function onCancel(id: number) {
+const cancelingReservationId = ref<number | null>(null)
+
+function onCancelClick(id: number) {
+  cancelingReservationId.value = id
+}
+
+function closeModal() {
+  cancelingReservationId.value = null
+}
+
+async function confirmCancel() {
+  if (cancelingReservationId.value === null) return
   try {
-    await res.cancel(id)
+    await res.cancel(cancelingReservationId.value)
   } catch {
     /* error in store */
   }
+  cancelingReservationId.value = null
 }
 </script>
 
@@ -84,13 +96,35 @@ async function onCancel(id: number) {
             variant="danger"
             size="sm"
             :disabled="res.loading"
-            @click="onCancel(row.id)"
+            @click="onCancelClick(row.id)"
           >
             Anuluj
           </BaseButton>
         </div>
       </template>
     </DataTable>
+
+    <div
+      v-if="cancelingReservationId !== null"
+      class="modal-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="cancel-dialog-title"
+      @click.self="closeModal"
+    >
+      <div class="modal-card">
+        <h3 id="cancel-dialog-title" class="modal-title">Anulować rezerwację?</h3>
+        <p class="modal-text">
+          Czy na pewno chcesz anulować tę rezerwację? Tej operacji nie można cofnąć.
+        </p>
+        <div class="modal-actions">
+          <BaseButton variant="secondary" @click="closeModal">Nie</BaseButton>
+          <BaseButton variant="danger" :disabled="res.loading" @click="confirmCancel">
+            Tak, anuluj
+          </BaseButton>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -115,5 +149,42 @@ async function onCancel(id: number) {
   display: flex;
   gap: var(--space-2);
   flex-wrap: wrap;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal-card {
+  background: var(--color-bg);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  max-width: 400px;
+  width: 90%;
+  box-shadow: var(--shadow-lg);
+}
+
+.modal-title {
+  font-size: var(--text-lg);
+  font-weight: var(--font-semibold);
+  margin-bottom: var(--space-2);
+}
+
+.modal-text {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  margin-bottom: var(--space-4);
+}
+
+.modal-actions {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: flex-end;
 }
 </style>
