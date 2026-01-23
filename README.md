@@ -32,18 +32,16 @@ MeetSpace Plus umożliwia użytkownikom przeglądanie sal, sprawdzanie dostępno
 
 ## 3. Instrukcja uruchomienia (Docker)
 
-Backend, baza i kolejki są w `backend/docker-compose.yml`. Frontend uruchamiany osobno (Vite proxy do backendu).
+Cały projekt (backend, frontend, baza, kolejki) uruchamiany jest przez Docker Compose.
 
 ### Wymagania
 
-- Docker i Docker Compose  
-- Node.js (frontend)  
-- Opcjonalnie: Python 3.12+ (testy backendu lokalnie)
+- Docker i Docker Compose
 
 ### Komendy
 
 ```bash
-# 1) Backend + PostgreSQL + RabbitMQ + Celery + Celery Beat
+# 1) Start wszystkich usług (backend + frontend + db + celery)
 cd backend
 docker compose up -d
 
@@ -65,15 +63,17 @@ docker compose exec backend python manage.py create_demo_admin
 
 **Seed** tworzy m.in. 10 sal, 5 equipment, 20 room_equipment, 10 użytkowników (2 admin), 20–30 rezerwacji. Hasło użytkowników z `seed`: `seedhaslo1`. Dla `create_demo_admin`: `DemoPass!1` (lub zmienna `DEMO_PASSWORD`).
 
-### Frontend
+### Dostępne usługi
 
-```bash
-cd frontend
-npm install
-npm run dev
-```
+| Usługa | URL |
+|--------|-----|
+| Frontend | http://localhost:5173 |
+| Backend API | http://localhost:8000 |
+| Django Admin | http://localhost:8000/admin/ |
+| pgAdmin | http://localhost:5050 |
+| RabbitMQ Management | http://localhost:15672 (guest/guest) |
 
-Aplikacja: `http://localhost:5173`. Vite proxy `/api` → `http://localhost:8000`. Backend: `http://localhost:8000`, Admin: `http://localhost:8000/admin/`, RabbitMQ Management: `http://localhost:15672` (guest/guest).
+Hot reload działa automatycznie dla frontendu (`src/` zamontowany jako volume).
 
 ---
 
@@ -246,23 +246,17 @@ Widać m.in. odpalenia `reconcile-pending` co 5 minut.
 
 ```bash
 cd backend
-# Z Dockerem (PostgreSQL, RabbitMQ, Celery – w dev często CELERY_TASK_ALWAYS_EAGER=1 / SQLite)
 docker compose exec backend pytest
-
-# Lokalnie (Python 3.12+, venv, DATABASE_URL opcjonalnie – domyślnie SQLite)
-# export DJANGO_SETTINGS_MODULE=config.settings.dev  # zwykle w pytest.ini
-pytest
 ```
 
-Konfiguracja: `backend/pytest.ini` (testpaths=tests, python_files=test_*.py).  
+Konfiguracja: `backend/pytest.ini` (testpaths=tests, python_files=test_*.py).
 Testy logiki rezerwacji i kolizji: `backend/tests/reservations/test_booking.py`, `test_reservations_api.py`; zadania: `test_tasks.py`.
 
 ### Frontend (Vitest)
 
 ```bash
-cd frontend
-npm run test        # tryb watch
-npm run test:run    # jeden przebieg
+cd backend
+docker compose exec frontend npm run test:run
 ```
 
 ---

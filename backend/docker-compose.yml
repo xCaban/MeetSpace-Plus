@@ -111,7 +111,8 @@ services:
     ports:
       - "5173:5173"
     environment:
-      VITE_API_BASE: http://backend:8000/api
+      # Direct API calls bypass Vite proxy (Docker networking issue workaround)
+      VITE_API_BASE: http://localhost:8000/api
     volumes:
       - ../frontend/src:/app/src
     depends_on:
