@@ -9,6 +9,23 @@ Vue 3 + Vite + TypeScript, Pinia, Vue Router, axios. Proxy do API w dev: `/api` 
 
 ## Uruchomienie
 
+### Opcja 1: Docker (zalecane)
+
+Uruchom całą aplikację jedną komendą z katalogu `backend/`:
+
+```bash
+cd backend
+docker compose up -d
+```
+
+Usługi:
+- Frontend: http://localhost:5173
+- Backend API: http://localhost:8000
+- pgAdmin: http://localhost:5050
+- RabbitMQ: http://localhost:15672
+
+### Opcja 2: npm (standalone)
+
 ```bash
 npm install
 npm run dev

@@ -106,6 +106,19 @@ services:
     networks:
       - meetspace-net
 
+  frontend:
+    build: ../frontend
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_BASE: http://backend:8000/api
+    volumes:
+      - ../frontend/src:/app/src
+    depends_on:
+      - backend
+    networks:
+      - meetspace-net
+
 networks:
   meetspace-net:
     driver: bridge
