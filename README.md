@@ -259,24 +259,6 @@ cd backend
 docker compose exec frontend npm run test:run
 ```
 
----
-
-## 9. Konwencja commitów i wskazówki (≥40 commitów)
-
-### Konwencja
-
-Proponowana **Conventional Commits**:
-
-- `feat: ...` – nowa funkcjonalność (np. `feat(api): endpoint confirm reservation`)
-- `fix: ...` – poprawki (np. `fix(booking): kolizja przy granicy slotu`)
-- `docs: ...` – dokumentacja (README, ERD, komentarze)
-- `test: ...` – testy (np. `test(reservations): kolizje przy create`)
-- `chore: ...` – zależności, Docker, konfiguracja (np. `chore(deps): drf-spectacular`)
-
-Opcjonalnie scope w nawiasie: `feat(rooms): capacity i location`.
-
----
-
 ## Licencja
 
 Zob. [LICENSE](LICENSE).
