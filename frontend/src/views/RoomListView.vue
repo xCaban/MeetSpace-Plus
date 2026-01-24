@@ -26,12 +26,16 @@ function formatEquipment(eq?: { name: string; qty: number }[]) {
   return eq.map((e) => `${e.name}${e.qty > 1 ? ` (${e.qty})` : ""}`).join(", ")
 }
 
-const emptyText = computed(() => {
-  const hasFilters =
+const hasFilters = computed(() => {
+  return (
     (rooms.filters.capacity_min != null && rooms.filters.capacity_min > 0) ||
     (rooms.filters.location != null && String(rooms.filters.location).trim() !== "") ||
     (rooms.filters.equipment_ids != null && rooms.filters.equipment_ids.length > 0)
-  return hasFilters ? "Brak sal spełniających kryteria" : "Brak sal"
+  )
+})
+
+const emptyText = computed(() => {
+  return hasFilters.value ? "Brak sal spełniających kryteria" : "Brak sal"
 })
 
 onMounted(async () => {
@@ -47,6 +51,13 @@ function applyFilters() {
     location: typeof loc === "string" && loc.trim() !== "" ? loc.trim() : undefined,
     equipment_ids: filterEquipment.value.length > 0 ? filterEquipment.value : undefined,
   })
+}
+
+function resetFilters() {
+  filterCap.value = ""
+  filterLoc.value = ""
+  filterEquipment.value = []
+  rooms.clearFilters()
 }
 
 function rowFor(r: {
@@ -101,6 +112,7 @@ function onReservationCancel() {
       />
       <div class="filter-actions">
         <BaseButton @click="applyFilters">Filtruj</BaseButton>
+        <BaseButton v-if="hasFilters" variant="secondary" @click="resetFilters">Resetuj</BaseButton>
       </div>
     </section>
 

@@ -27,6 +27,10 @@ export const useRoomsStore = defineStore("rooms", () => {
     filters.value = { ...filters.value, ...p }
   }
 
+  function clearFilters() {
+    filters.value = {}
+  }
+
   const filteredList = computed(() => {
     const l = list.value
     const { capacity_min, location, equipment_ids } = filters.value
@@ -147,6 +151,7 @@ export const useRoomsStore = defineStore("rooms", () => {
     listCount,
     filters,
     setFilters,
+    clearFilters,
     filteredList,
     isListEmpty,
     hasError,
