@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import BaseSkeleton from "./BaseSkeleton.vue"
+
 interface Column {
   key: string
   label: string
@@ -13,11 +15,14 @@ interface Props {
   emptyText?: string
   /** Etykieta dla czytników ekranu (a11y). */
   ariaLabel?: string
+  /** Liczba skeleton rows podczas ładowania. */
+  skeletonRows?: number
 }
 
 withDefaults(defineProps<Props>(), {
   loading: false,
   emptyText: "Brak danych",
+  skeletonRows: 3,
 })
 </script>
 
@@ -32,9 +37,13 @@ withDefaults(defineProps<Props>(), {
         </tr>
       </thead>
       <tbody>
-        <tr v-if="loading">
-          <td :colspan="columns.length" class="table-loading">Ładowanie…</td>
-        </tr>
+        <template v-if="loading">
+          <tr v-for="n in skeletonRows" :key="`skeleton-${n}`" class="skeleton-row">
+            <td v-for="col in columns" :key="col.key" :class="col.class">
+              <BaseSkeleton width="70%" height="1rem" />
+            </td>
+          </tr>
+        </template>
         <tr v-else-if="data.length === 0">
           <td :colspan="columns.length" class="table-empty">
             {{ emptyText }}
@@ -97,11 +106,14 @@ tr:hover td {
   background: var(--color-neutral-50);
 }
 
-.table-loading,
 .table-empty {
   text-align: center;
   color: var(--color-text-muted);
   padding: var(--space-8) !important;
+}
+
+.skeleton-row:hover td {
+  background: transparent;
 }
 
 @media (max-width: 640px) {
