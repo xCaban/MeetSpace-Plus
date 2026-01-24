@@ -374,9 +374,23 @@ onMounted(async () => {
   white-space: nowrap;
 }
 
+.cal-cell {
+  transition: background 0.15s, transform 0.15s;
+}
+
+.cal-cell:hover {
+  background: var(--color-neutral-100);
+}
+
 .cal-cell--busy {
   background: var(--color-danger-muted);
   color: var(--color-danger);
+  cursor: help;
+}
+
+.cal-cell--busy:hover {
+  background: var(--color-danger);
+  color: white;
 }
 
 .cal-loading {
