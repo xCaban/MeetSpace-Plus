@@ -103,16 +103,38 @@ function getSlotEnd(dayOffset: number, hour: number, minute: number): Date {
   return e
 }
 
-function isSlotOccupied(dayOffset: number, hour: number, minute: number): boolean {
+function getSlotReservation(dayOffset: number, hour: number, minute: number): Reservation | null {
   const list = reservations.list as Reservation[]
   const slotStart = getSlotStart(dayOffset, hour, minute).getTime()
   const slotEnd = getSlotEnd(dayOffset, hour, minute).getTime()
-  return list.some((r) => {
-    if (r.status === "canceled") return false
-    const rs = new Date(r.start_at).getTime()
-    const re = new Date(r.end_at).getTime()
-    return rs < slotEnd && re > slotStart
-  })
+  return (
+    list.find((r) => {
+      if (r.status === "canceled") return false
+      const rs = new Date(r.start_at).getTime()
+      const re = new Date(r.end_at).getTime()
+      return rs < slotEnd && re > slotStart
+    }) ?? null
+  )
+}
+
+function isSlotOccupied(dayOffset: number, hour: number, minute: number): boolean {
+  return getSlotReservation(dayOffset, hour, minute) !== null
+}
+
+const tooltip = ref<{ reservation: Reservation; x: number; y: number } | null>(null)
+
+function showTooltip(event: MouseEvent, reservation: Reservation | null) {
+  if (!reservation) return
+  const rect = (event.target as HTMLElement).getBoundingClientRect()
+  tooltip.value = {
+    reservation,
+    x: rect.left + rect.width / 2,
+    y: rect.top,
+  }
+}
+
+function hideTooltip() {
+  tooltip.value = null
 }
 
 const dayCount = computed(() => (viewMode.value === "day" ? 1 : 7))
@@ -227,6 +249,8 @@ onMounted(async () => {
                 :key="d - 1"
                 class="cal-cell"
                 :class="{ 'cal-cell--busy': isSlotOccupied(d - 1, slot.hour, slot.minute) }"
+                @mouseenter="showTooltip($event, getSlotReservation(d - 1, slot.hour, slot.minute))"
+                @mouseleave="hideTooltip"
               >
                 {{ isSlotOccupied(d - 1, slot.hour, slot.minute) ? "zajęte" : "wolne" }}
               </td>
@@ -235,6 +259,19 @@ onMounted(async () => {
         </tbody>
       </table>
     </div>
+
+    <Teleport to="body">
+      <div
+        v-if="tooltip"
+        class="slot-tooltip"
+        :style="{ left: tooltip.x + 'px', top: tooltip.y + 'px' }"
+      >
+        <span class="slot-tooltip-name">
+          {{ tooltip.reservation.user_first_name }} {{ tooltip.reservation.user_last_name }}
+        </span>
+        <span class="slot-tooltip-email">{{ tooltip.reservation.user_email }}</span>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -346,5 +383,44 @@ onMounted(async () => {
   text-align: center;
   color: var(--color-text-muted);
   padding: var(--space-6);
+}
+</style>
+
+<style>
+.slot-tooltip {
+  position: fixed;
+  transform: translate(-50%, -100%);
+  margin-top: -8px;
+  background: var(--color-neutral-800, #1f2937);
+  color: white;
+  padding: var(--space-2, 0.5rem) var(--space-3, 0.75rem);
+  border-radius: var(--radius-md, 0.375rem);
+  font-size: var(--text-sm, 0.875rem);
+  white-space: nowrap;
+  z-index: 1000;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
+
+.slot-tooltip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: var(--color-neutral-800, #1f2937);
+}
+
+.slot-tooltip-name {
+  font-weight: var(--font-medium, 500);
+}
+
+.slot-tooltip-email {
+  font-size: var(--text-xs, 0.75rem);
+  opacity: 0.8;
 }
 </style>

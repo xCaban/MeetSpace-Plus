@@ -515,8 +515,7 @@ async function onPasswordResetSubmit() {
           <BaseButton
             type="button"
             variant="outline"
-            @click="
-              showUserForm = false
+            @click="showUserForm = false;
               resetUserForm()
             "
             >Anuluj</BaseButton

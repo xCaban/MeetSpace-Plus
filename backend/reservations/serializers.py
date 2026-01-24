@@ -9,6 +9,8 @@ from rooms.models import Room
 class ReservationListSerializer(serializers.ModelSerializer):
     room_name = serializers.CharField(source="room.name", read_only=True)
     user_email = serializers.CharField(source="user.email", read_only=True)
+    user_first_name = serializers.CharField(source="user.first_name", read_only=True)
+    user_last_name = serializers.CharField(source="user.last_name", read_only=True)
 
     class Meta:
         model = Reservation
@@ -16,6 +18,8 @@ class ReservationListSerializer(serializers.ModelSerializer):
             "id",
             "user",
             "user_email",
+            "user_first_name",
+            "user_last_name",
             "room",
             "room_name",
             "status",
@@ -30,6 +34,8 @@ class ReservationListSerializer(serializers.ModelSerializer):
 class ReservationDetailSerializer(serializers.ModelSerializer):
     room_name = serializers.CharField(source="room.name", read_only=True)
     user_email = serializers.CharField(source="user.email", read_only=True)
+    user_first_name = serializers.CharField(source="user.first_name", read_only=True)
+    user_last_name = serializers.CharField(source="user.last_name", read_only=True)
 
     class Meta:
         model = Reservation
@@ -37,6 +43,8 @@ class ReservationDetailSerializer(serializers.ModelSerializer):
             "id",
             "user",
             "user_email",
+            "user_first_name",
+            "user_last_name",
             "room",
             "room_name",
             "status",

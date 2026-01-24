@@ -77,6 +77,8 @@ export interface Reservation {
   id: number
   user: number
   user_email: string
+  user_first_name: string
+  user_last_name: string
   room: number
   room_name: string
   status: ReservationStatusValue
