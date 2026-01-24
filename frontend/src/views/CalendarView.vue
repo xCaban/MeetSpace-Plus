@@ -193,7 +193,7 @@ onMounted(async () => {
       </div>
       <div class="toolbar-group nav">
         <button type="button" class="nav-btn" aria-label="Poprzedni" @click="prev">‹</button>
-        <button type="button" class="nav-btn today" @click="today">Today</button>
+        <button type="button" class="nav-btn today" @click="today">Dziś</button>
         <button type="button" class="nav-btn" aria-label="Następny" @click="next">›</button>
       </div>
     </div>
