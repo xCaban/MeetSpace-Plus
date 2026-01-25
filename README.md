@@ -10,8 +10,8 @@ MeetSpace Plus umożliwia użytkownikom przeglądanie sal, sprawdzanie dostępno
 
 **Główne funkcje:**
 
-- Uwierzytelnianie: **JWT** dla SPA (użytkownicy), **sesja** dla Django Admin (administrator).
-- Role **admin** i **user** (M:N). Panel administratora: Django Admin + widoki SPA (np. zarządzanie salami).
+- Uwierzytelnianie: **JWT** dla SPA.
+- Role **admin** i **user** (M:N). Panel administratora w SPA (np. zarządzanie salami, użytkownikami).
 - Sale: nazwa, pojemność, lokalizacja; sprzęt (equipment) i powiązanie **room–equipment** (M:N z `qty`).
 - Rezerwacje: `pending` / `confirmed` / `canceled`; hold 15 min; walidacja kolizji `(room_id, [start_at, end_at])`; godziny robocze (domyślnie 8–18).
 - Zadania asynchroniczne: **expire_hold** (anuluje pending po wygaśnięciu holda), **send_notifications** (hook pod e‑mail/WebSocket), **reconcile_pending** (Beat: sprzątanie starych pending co 5 min).
@@ -54,10 +54,7 @@ docker compose exec backend python manage.py seed
 # Opcjonalnie: seed od zera (--reset usuwa dane i odtwarza)
 docker compose exec backend python manage.py seed --reset
 
-# 4) Superuser (Django Admin) – ręcznie
-docker compose exec backend python manage.py createsuperuser
-
-# lub demo admin (admin1@example.com, admin2@example.com; hasło: DEMO_PASSWORD=DemoPass!1)
+# 4) Demo admin (admin1@example.com, admin2@example.com; hasło: DemoPass!1)
 docker compose exec backend python manage.py create_demo_admin
 ```
 
@@ -69,7 +66,7 @@ docker compose exec backend python manage.py create_demo_admin
 |--------|-----|
 | Frontend | http://localhost:5173 |
 | Backend API | http://localhost:8000 |
-| Django Admin | http://localhost:8000/admin/ |
+| Swagger (API docs) | http://localhost:8000/api/docs/ |
 | pgAdmin | http://localhost:5050 |
 | RabbitMQ Management | http://localhost:15672 (guest/guest) |
 
@@ -178,8 +175,8 @@ Braku nakładania slotów `(room_id, [start_at, end_at])` nie da się w pełni w
 ```bash
 curl -X POST http://localhost:8000/api/auth/login/ \
   -H "Content-Type: application/json" \
-  -d '{"username":"admin1@example.com","password":"DemoPass!1"}'
-# Odpowiedź: {"access":"<JWT>","refresh":"<JWT>"}
+  -d '{"email":"admin1@example.com","password":"DemoPass!1"}'
+# Odpowiedź: {"access":"<JWT>","refresh":"<JWT>","user":{"id":1,"email":"...","roles":["admin"]}}
 ```
 
 **Lista sal (z JWT):**
@@ -194,7 +191,7 @@ curl -H "Authorization: Bearer <ACCESS_TOKEN>" http://localhost:8000/api/rooms/
 curl -X POST http://localhost:8000/api/reservations/ \
   -H "Authorization: Bearer <ACCESS_TOKEN>" \
   -H "Content-Type: application/json" \
-  -d '{"room":1,"start_at":"2025-06-15T10:00:00+02:00","end_at":"2025-06-15T11:00:00+02:00"}'
+  -d '{"room_id":1,"start_at":"2025-06-15T10:00:00+02:00","end_at":"2025-06-15T11:00:00+02:00"}'
 # 201: rezerwacja pending, hold 15 min, zaplanowany expire_hold
 # 409: kolizja z istniejącą rezerwacją
 ```
