@@ -155,8 +155,6 @@ erDiagram
     }
 ```
 
-Braku nakładania slotów `(room_id, [start_at, end_at])` nie da się w pełni wymusić na samym SQLite; w projekcie jest on egzekwowany w **serwisie** `booking.create_reservation` (409 przy kolizji). W PostgreSQL możliwy jest `ExclusionConstraint`.
-
 ---
 
 ## 6. API: Swagger i przykładowe requesty
